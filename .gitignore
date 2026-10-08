@@ -1,0 +1,29 @@
+# ---- Data: keep the folder layout and boundary files, ignore everything else ----
+backend/data/**
+!backend/data/**/
+!backend/data/**/.gitkeep
+!backend/data/README.md
+!backend/data/boundaries/**
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ---- Node / frontend ----
+node_modules/
+frontend/dist/
+frontend/build/
+.next/
+.env
+.env.*
+!.env.example
+
+# ---- OS / editors ----
+.DS_Store
+.vscode/*
+!.vscode/settings.json
+.idea/

@@ -1,0 +1,65 @@
+nibrs_code,nibrs_description,nibrs_category,nibrs_group,crime_against,is_violent,is_property,crime_category
+09A,Murder and Nonnegligent Manslaughter,HOMICIDE OFFENSES,A,Person,1,0,Homicide
+09B,Negligent Manslaughter,HOMICIDE OFFENSES,A,Person,0,0,Homicide
+09C,Justifiable Homicide,HOMICIDE OFFENSES,A,Person,0,0,Homicide
+100,Kidnapping/Abduction,KIDNAPPING/ABDUCTION,A,Person,0,0,Kidnapping & Trafficking
+11A,Forcible Rape,"SEX OFFENSES, FORCIBLE",A,Person,1,0,Sex Offense
+11B,Forcible Sodomy,"SEX OFFENSES, FORCIBLE",A,Person,1,0,Sex Offense
+11C,Sexual Assault With an Object,"SEX OFFENSES, FORCIBLE",A,Person,1,0,Sex Offense
+11D,Forcible Fondling,"SEX OFFENSES, FORCIBLE",A,Person,0,0,Sex Offense
+120,Robbery,ROBBERY,A,Property,1,0,Robbery
+13A,Aggravated Assault,ASSAULT OFFENSES,A,Person,1,0,Aggravated Assault
+13B,Simple Assault,ASSAULT OFFENSES,A,Person,0,0,Simple Assault
+13C,Intimidation,ASSAULT OFFENSES,A,Person,0,0,Simple Assault
+200,Arson,ARSON,A,Property,0,1,Vandalism & Arson
+210,Extortion/Blackmail,EXTORTION/BLACKMAIL,A,Property,0,0,Fraud & Financial
+220,Burglary/Breaking & Entering,BURGLARY/BREAKING & ENTERING,A,Property,0,1,Burglary
+23A,Pocket-Picking,LARCENY/THEFT OFFENSES,A,Property,0,1,Theft
+23B,Purse-Snatching,LARCENY/THEFT OFFENSES,A,Property,0,1,Theft
+23C,Shoplifting,LARCENY/THEFT OFFENSES,A,Property,0,1,Theft
+23D,Theft From Building,LARCENY/THEFT OFFENSES,A,Property,0,1,Theft
+23E,Theft From Coin Operated Machine or Device,LARCENY/THEFT OFFENSES,A,Property,0,1,Theft
+23F,Theft From Motor Vehicle,LARCENY/THEFT OFFENSES,A,Property,0,1,Theft from Vehicle
+23G,Theft of Motor Vehicle Parts/Accessories,LARCENY/THEFT OFFENSES,A,Property,0,1,Theft from Vehicle
+23H,All Other Larceny,LARCENY/THEFT OFFENSES,A,Property,0,1,Theft
+240,Motor Vehicle Theft,MOTOR VEHICLE THEFT,A,Property,0,1,Motor Vehicle Theft
+250,Counterfeiting/Forgery,COUNTERFEITING/FORGERY,A,Property,0,0,Fraud & Financial
+26A,False Pretenses/Swindle/Confidence Game,FRAUD OFFENSES,A,Property,0,0,Fraud & Financial
+26B,Credit Card/Automatic Teller Fraud,FRAUD OFFENSES,A,Property,0,0,Fraud & Financial
+26C,Impersonation,FRAUD OFFENSES,A,Property,0,0,Fraud & Financial
+26D,Welfare Fraud,FRAUD OFFENSES,A,Property,0,0,Fraud & Financial
+26E,Wire Fraud,FRAUD OFFENSES,A,Property,0,0,Fraud & Financial
+26F,Identity Theft,FRAUD OFFENSES,A,Property,0,0,Fraud & Financial
+26G,Hacking/Computer Fraud,FRAUD OFFENSES,A,Property,0,0,Fraud & Financial
+26H,Money Laundering,FRAUD OFFENSES,A,Society,0,0,Fraud & Financial
+270,Embezzlement,EMBEZZLEMENT,A,Property,0,0,Fraud & Financial
+280,Stolen Property Offenses,STOLEN PROPERTY OFFENSES,A,Property,0,0,Fraud & Financial
+290,Destruction/Damage/Vandalism of Property,DESTRUCTION/DAMAGE/VANDALISM OF PROPERTY,A,Property,0,0,Vandalism & Arson
+35A,Drug/Narcotic Violations,DRUG/NARCOTIC OFFENSES,A,Society,0,0,Drugs
+35B,Drug Equipment Violations,DRUG/NARCOTIC OFFENSES,A,Society,0,0,Drugs
+36A,Incest,"SEX OFFENSES, NONFORCIBLE",A,Person,0,0,Sex Offense
+36B,Statutory Rape,"SEX OFFENSES, NONFORCIBLE",A,Person,0,0,Sex Offense
+370,Pornography/Obscene Material,PORNOGRAPHY/OBSCENE MATERIAL,A,Society,0,0,Public Order
+39A,Betting/Wagering,GAMBLING OFFENSES,A,Society,0,0,Public Order
+39B,Operating/Promoting/Assisting Gambling,GAMBLING OFFENSES,A,Society,0,0,Public Order
+39C,Gambling Equipment Violations,GAMBLING OFFENSES,A,Society,0,0,Public Order
+39D,Sports Tampering,GAMBLING OFFENSES,A,Society,0,0,Public Order
+40A,Prostitution,PROSTITUTION OFFENSES,A,Society,0,0,Public Order
+40B,Assisting or Promoting Prostitution,PROSTITUTION OFFENSES,A,Society,0,0,Public Order
+40C,Purchasing Prostitution,PROSTITUTION OFFENSES,A,Society,0,0,Public Order
+510,Bribery,BRIBERY,A,Property,0,0,Fraud & Financial
+520,Weapon Law Violations,WEAPON LAW VIOLATIONS,A,Society,0,0,Weapons
+64A,"Human Trafficking, Commercial Sex Acts",HUMAN TRAFFICKING,A,Person,0,0,Kidnapping & Trafficking
+64B,"Human Trafficking, Involuntary Servitude",HUMAN TRAFFICKING,A,Person,0,0,Kidnapping & Trafficking
+720,Animal Cruelty,ANIMAL CRUELTY,A,Society,0,0,Public Order
+90A,Bad Checks,"GROUP ""B"" OFFENSES",B,Property,0,0,Fraud & Financial
+90B,Curfew/Loitering/Vagrancy Violations,"GROUP ""B"" OFFENSES",B,Society,0,0,Public Order
+90C,Disorderly Conduct,"GROUP ""B"" OFFENSES",B,Society,0,0,Public Order
+90D,Driving Under the Influence,"GROUP ""B"" OFFENSES",B,Society,0,0,Public Order
+90E,Drunkenness,"GROUP ""B"" OFFENSES",B,Society,0,0,Public Order
+90F,Family Offenses (Nonviolent),"GROUP ""B"" OFFENSES",B,,0,0,Public Order
+90G,Liquor Law Violations,"GROUP ""B"" OFFENSES",B,Society,0,0,Public Order
+90H,Peeping Tom,"GROUP ""B"" OFFENSES",B,Society,0,0,Public Order
+90I,Runaway,"GROUP ""B"" OFFENSES",B,,0,0,Non-Crime
+90J,Trespass of Real Property,"GROUP ""B"" OFFENSES",B,Society,0,0,Public Order
+90Z,All Other Offenses,"GROUP ""B"" OFFENSES",B,,0,0,All Other

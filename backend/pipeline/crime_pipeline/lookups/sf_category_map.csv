@@ -1,0 +1,70 @@
+source_offense_category,source_offense_subcategory,crime_category
+Arson,*,Vandalism & Arson
+Assault,Aggravated Assault,Aggravated Assault
+Assault,Simple Assault,Simple Assault
+Burglary,*,Burglary
+Case Closure,*,Non-Crime
+Civil Sidewalks,*,Public Order
+Courtesy Report,*,Non-Crime
+Disorderly Conduct,*,Public Order
+Disorderly Conduct,Drug Violation,Drugs
+Disorderly Conduct,Intimidation,Simple Assault
+Disorderly Conduct,Weapons Offense,Weapons
+Drug Offense,*,Drugs
+Drug Violation,*,Drugs
+Embezzlement,*,Fraud & Financial
+Fire Report,*,Non-Crime
+Forgery And Counterfeiting,*,Fraud & Financial
+Fraud,*,Fraud & Financial
+Gambling,*,Public Order
+Homicide,*,Homicide
+"Human Trafficking (A), Commercial Sex Acts",*,Kidnapping & Trafficking
+"Human Trafficking (B), Involuntary Servitude",*,Kidnapping & Trafficking
+Larceny Theft,*,Theft
+Larceny Theft,Larceny - Auto Parts,Theft from Vehicle
+Larceny Theft,Larceny - From Vehicle,Theft from Vehicle
+Larceny Theft,Theft From Vehicle,Theft from Vehicle
+Liquor Laws,*,Public Order
+Lost Property,*,Non-Crime
+Malicious Mischief,*,Vandalism & Arson
+Miscellaneous Investigation,*,Non-Crime
+Missing Person,*,Non-Crime
+Motor Vehicle Theft,*,Motor Vehicle Theft
+Non-Criminal,*,Non-Crime
+Offences Against The Family And Children,*,Public Order
+Offences Against The Family And Children,Intimidation,Simple Assault
+Offences Against The Family And Children,Stalking,Simple Assault
+Other,*,All Other
+Other Miscellaneous,*,All Other
+Other Miscellaneous,Bribery,Fraud & Financial
+Other Miscellaneous,Disorderly Conduct,Public Order
+Other Miscellaneous,Extortion-Blackmail,Fraud & Financial
+Other Miscellaneous,Fraud,Fraud & Financial
+Other Miscellaneous,Intimidation,Simple Assault
+Other Miscellaneous,Kidnapping,Kidnapping & Trafficking
+Other Miscellaneous,Larceny Theft - Other,Theft
+Other Miscellaneous,Liquor Law Violation,Public Order
+Other Miscellaneous,Loitering,Public Order
+Other Miscellaneous,Simple Assault,Simple Assault
+Other Miscellaneous,Suspicious Occ,Non-Crime
+Other Miscellaneous,Trespass,Public Order
+Other Miscellaneous,Weapons Offense,Weapons
+Other Offenses,*,All Other
+Prostitution,*,Public Order
+Rape,*,Sex Offense
+Recovered Vehicle,*,Non-Crime
+Robbery,*,Robbery
+Sex Offense,*,Sex Offense
+Sex Offense,Prostitution,Public Order
+Stolen Property,*,Fraud & Financial
+Suicide,*,Non-Crime
+Suspicious,*,Non-Crime
+Suspicious Occ,*,Non-Crime
+Traffic Collision,*,Non-Crime
+Traffic Violation Arrest,*,All Other
+Vandalism,*,Vandalism & Arson
+Vehicle Impounded,*,Non-Crime
+Vehicle Misplaced,*,Non-Crime
+Warrant,*,All Other
+Weapons Carrying Etc,*,Weapons
+Weapons Offense,*,Weapons

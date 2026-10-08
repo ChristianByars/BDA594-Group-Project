@@ -1,0 +1,18 @@
+crime_category,crime_group,sort_order,description
+Homicide,Violent,1,"Murder, manslaughter and other homicides"
+Sex Offense,Violent,2,"Rape, sexual assault, fondling and other sex crimes"
+Robbery,Violent,3,"Taking property by force or threat, including carjacking"
+Aggravated Assault,Violent,4,"Assault with a weapon or serious injury, including attempted murder"
+Simple Assault,Violent,5,"Assault without a weapon or serious injury, intimidation, threats, stalking"
+Kidnapping & Trafficking,Violent,6,"Kidnapping, abduction and human trafficking"
+Burglary,Property,7,Unlawful entry into a structure to commit a crime
+Theft,Property,8,"Larceny other than from vehicles: shoplifting, pickpocketing, bicycle theft, etc."
+Fraud & Financial,Property,9,"Fraud, identity theft, forgery, embezzlement, extortion, bribery, stolen property"
+Vandalism & Arson,Property,10,"Damage or destruction of property, including arson"
+Motor Vehicle Theft,Vehicle,11,Theft or attempted theft of a vehicle
+Theft from Vehicle,Vehicle,12,Theft from a vehicle or of vehicle parts
+Drugs,Society,13,Drug and drug equipment violations
+Weapons,Society,14,Weapon law violations
+Public Order,Society,15,"Disorderly conduct, DUI, trespass, prostitution, gambling, liquor laws, etc."
+All Other,Other,16,"Warrants, traffic arrests and offenses outside the categories above"
+Non-Crime,Non-Crime,17,"Reports that are not crimes: lost property, missing persons, recovered vehicles, etc."
