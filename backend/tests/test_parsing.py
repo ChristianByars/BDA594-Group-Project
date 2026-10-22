@@ -3,7 +3,7 @@
 import pandas as pd
 
 from crime_pipeline.cities import la, sd
-from crime_pipeline.common import COLUMNS, clean_text, finish, whole_number
+from crime_pipeline.common import COLUMNS, clean_text, finish, iso_date, whole_number
 
 
 def split_la(text):
@@ -34,6 +34,11 @@ def test_la_local_code_entry_fields():
 def test_la_truncated_entry_does_not_parse():
     fields = pd.Series(["14601.2(A) - VC - M - Driv - Susp/Etc Lic - Dui - Vio -"]).str.extract(la.STATUTE_PATTERN)
     assert fields.isna().all(axis=None)
+
+
+def test_la_dates_parse_to_iso():
+    dates = iso_date(pd.Series(["10/01/2006 12:00:00 AM", "02/17/2020 11:30:00 PM", "", None]), la.DATE_FORMAT)
+    assert dates.tolist()[:2] == ["2006-10-01", "2020-02-17"] and dates.isna().tolist() == [False, False, True, True]
 
 
 def test_sd_statute_with_class():

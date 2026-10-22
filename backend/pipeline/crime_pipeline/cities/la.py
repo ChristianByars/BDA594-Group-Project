@@ -33,7 +33,7 @@ STATUTE_PATTERN = (
 # local (pre-NIBRS LAPD) offense code - description
 LOCAL_PATTERN = r"^(?P<local_code>\d{3}[A-Z]?)\s+-\s+(?P<local_description>.+)$"
 
-DATE_FORMAT = "%Y %b %d %I:%M:%S %p"
+DATE_FORMAT = "%m/%d/%Y %I:%M:%S %p"
 
 
 def clean(paths):
