@@ -3,7 +3,7 @@
 import pandas as pd
 
 from crime_pipeline.cities import la, sd
-from crime_pipeline.common import COLUMNS, clean_text, finish, iso_date, whole_number
+from crime_pipeline.common import COLUMNS, clean_text, finish, whole_number
 
 
 def split_la(text):
@@ -36,8 +36,8 @@ def test_la_truncated_entry_does_not_parse():
     assert fields.isna().all(axis=None)
 
 
-def test_la_dates_parse_to_iso():
-    dates = iso_date(pd.Series(["10/01/2006 12:00:00 AM", "02/17/2020 11:30:00 PM", "", None]), la.DATE_FORMAT)
+def test_la_dates_parse_both_export_formats():
+    dates = la.parse_dates(pd.Series(["10/01/2006 12:00:00 AM", "2020 Feb 17 11:30:00 PM", "", None]))
     assert dates.tolist()[:2] == ["2006-10-01", "2020-02-17"] and dates.isna().tolist() == [False, False, True, True]
 
 
