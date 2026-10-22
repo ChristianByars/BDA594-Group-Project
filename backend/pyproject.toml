@@ -9,7 +9,7 @@ dependencies = ["pandas>=2.2", "shapely>=2.0", "certifi"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
-notebook = ["ipykernel", "jupyter"]
+notebook = ["ipykernel", "jupyter", "matplotlib"]
 
 [project.scripts]
 crime-pipeline = "crime_pipeline.cli:main"

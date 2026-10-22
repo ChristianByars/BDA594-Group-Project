@@ -36,6 +36,11 @@ def test_la_truncated_entry_does_not_parse():
     assert fields.isna().all(axis=None)
 
 
+def test_la_dates_parse_both_export_formats():
+    dates = la.parse_dates(pd.Series(["10/01/2006 12:00:00 AM", "2020 Feb 17 11:30:00 PM", "", None]))
+    assert dates.tolist()[:2] == ["2006-10-01", "2020-02-17"] and dates.isna().tolist() == [False, False, True, True]
+
+
 def test_sd_statute_with_class():
     fields = pd.Series(["487 (A) PC GRAND THEFT (Shoplifting) (F)"]).str.extract(sd.STATUTE_PATTERN).iloc[0]
     assert fields.to_dict() == {"statute": "487 (A)", "legal_code": "PC",
