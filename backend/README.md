@@ -74,6 +74,8 @@ Each SF crime is matched against the district map in effect on the date it occur
 
 `notebooks/DataCleanUp.ipynb` is the original exploration that led to this pipeline, kept as a record. It changes into `backend/` on its own, so its `data/...` paths work. Its last cell runs the whole pipeline.
 
+`notebooks/PerCapitaRates.ipynb` compares the cities per 100,000 residents using Census city populations. It reads `crime.db` and downloads the population file into `data/raw/census/` on first run.
+
 Editors usually don't list a nested `backend/.venv` as a kernel option. Register it once as a named kernel:
 
 ```bash

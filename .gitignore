@@ -28,3 +28,7 @@ frontend/build/
 !.vscode/settings.json
 .idea/
 graphify-out/  
+
+**/.claude/**/session-*
+**/.claude/**/offset-*
+**/.claude/**/requests

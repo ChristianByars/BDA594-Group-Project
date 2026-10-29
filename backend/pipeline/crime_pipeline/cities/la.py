@@ -33,7 +33,13 @@ STATUTE_PATTERN = (
 # local (pre-NIBRS LAPD) offense code - description
 LOCAL_PATTERN = r"^(?P<local_code>\d{3}[A-Z]?)\s+-\s+(?P<local_description>.+)$"
 
-DATE_FORMAT = "%Y %b %d %I:%M:%S %p"
+# LAPD exports have used both: "10/01/2006 12:00:00 AM" and "2006 Oct 01 12:00:00 AM".
+DATE_FORMATS = ("%m/%d/%Y %I:%M:%S %p", "%Y %b %d %I:%M:%S %p")
+
+
+def parse_dates(values):
+    """ISO dates from either LAPD export format."""
+    return iso_date(values, DATE_FORMATS[0]).fillna(iso_date(values, DATE_FORMATS[1]))
 
 
 def clean(paths):
@@ -85,9 +91,9 @@ def clean(paths):
     cleaned = pd.DataFrame({
         "case_no": offenses["CaseNo"],
         "offense_seq": offenses.groupby("CaseNo").cumcount() + 1,
-        "date_occ": iso_date(offenses["occurred"], DATE_FORMAT),
+        "date_occ": parse_dates(offenses["occurred"]),
         "time_occ": (hhmm.str[:2] + ":" + hhmm.str[2:]).where(valid_time),
-        "date_rptd": iso_date(offenses["reported"], DATE_FORMAT),
+        "date_rptd": parse_dates(offenses["reported"]),
         "area_name": offenses["area"],
         "status_desc": clean_text(offenses["status"]),
         "total_victim_count": offenses["total_victims"].astype("Int64"),
