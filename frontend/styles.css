@@ -1573,3 +1573,42 @@ body[data-active-tab="map"] .custom-draw-controls {
   border-color: rgba(0,0,0,0.2);
 }
 
+
+/* Crime dashboard: map note and legend */
+#mapNote {
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.map-legend {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111827;
+  font-size: 12px;
+  line-height: 1.6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.map-legend:empty {
+  display: none;
+}
+
+.map-legend strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border-radius: 3px;
+  vertical-align: -2px;
+}
+
+:root[data-theme="dark"] .map-legend {
+  background: rgba(17, 24, 39, 0.92);
+  color: #e5e7eb;
+}

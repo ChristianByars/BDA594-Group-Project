@@ -6,7 +6,8 @@ Pipeline steps (each is a `crime-pipeline` subcommand):
     standardize       cleaned/ -> standardized/  shared layout, categories, geography
     check             quality checks on standardized/
     load              standardized/ -> crime.db (SQLite)
-    all               clean, standardize, check, load
+    export            crime.db -> frontend/data/ (web data bundle + compatibility report)
+    all               clean, standardize, check, load, export
 """
 
 __version__ = "1.0.0"

@@ -10,7 +10,7 @@
 │  ├─ data/          raw/, cleaned/, standardized/ datasets (not in git)
 │  ├─ notebooks/     original data exploration
 │  └─ DATA_CONTRACT.md   what's in crime.db, for the website
-├─ frontend/    website + dashboards (TypeScript), which read crime.db
+├─ frontend/    static dashboard page (HTML, JavaScript, CSS) + data/ exported from crime.db
 └─ docs/        project proposal and other write-ups
 ```
 
@@ -27,7 +27,7 @@ Open this folder (`BDA594-Group-Project/`) in VS Code. The shared `.vscode/setti
    crime-pipeline all
    ```
 
-2. **Build the site.** See [frontend/README.md](frontend/README.md) and [backend/DATA_CONTRACT.md](backend/DATA_CONTRACT.md).
+2. **View the site.** `crime-pipeline all` ends by exporting the website's data to `frontend/data/`. Serve the page with `cd frontend && python -m http.server 8000`. See [frontend/README.md](frontend/README.md).
 
 ## Data at a glance
 
