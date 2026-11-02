@@ -12,7 +12,7 @@ data/raw/ ──clean──▶ data/cleaned/ ──standardize──▶ data/sta
 | **standardize** | All cities in one shared layout, plus shared crime categories, LAPD area details and SF police districts and ZIPs |
 | **check** | About 85 quality checks against the raw data. `all` stops here if any check fails. |
 | **load** | `crime.db` with indexes, summary tables and lookup tables |
-| **export** | Monthly counts, lookups, ZIP socioeconomic rows and map shapes for the website, plus a report on how the crime data joins to the ZIP files |
+| **export** | Monthly, daily and hour-of-day counts, city populations, lookups, ZIP socioeconomic rows and map shapes for the website, plus a report on how the crime data joins to the ZIP files |
 
 - **Database reference for the website:** [DATA_CONTRACT.md](DATA_CONTRACT.md)
 - **Data folders and where to get raw files:** [data/README.md](data/README.md)
@@ -57,6 +57,7 @@ The shared categories are plain CSV files in `pipeline/crime_pipeline/lookups/`:
 | `sf_category_map.csv` | SFPD category + subcategory → shared category (`*` = any subcategory) |
 | `la_local_codes.csv` | Old LAPD crime codes → shared category |
 | `lapd_areas.csv` | LAPD area numbers, bureaus and map center points |
+| `city_population.csv` | City population per year (used by `export` only, not a category mapping) |
 
 Edit the CSV, then run `crime-pipeline standardize check load`, or just `crime-pipeline all`. The checks warn about any new code or category that isn't mapped yet.
 
@@ -74,7 +75,16 @@ Each SF crime is matched against the district map in effect on the date it occur
 
 ## Website data bundle
 
-`crime-pipeline export` writes small pre-aggregated files to `frontend/data/`, so the website never opens `crime.db`. Run it after `load`, then commit `frontend/data/` so the site deploys without a rebuild. The files and their fields are listed in [DATA_CONTRACT.md](DATA_CONTRACT.md#web-export-frontenddata).
+`crime-pipeline export` writes small pre-aggregated files to `frontend/data/`, so the website never opens `crime.db`. Run it after `load`, then commit `frontend/data/` so the site deploys without a rebuild. The files and their fields are listed in [DATA_CONTRACT.md](DATA_CONTRACT.md#web-export-frontenddata). The whole folder is about 8.5 MB; keep it under 10 MB.
+
+| Output | Contents |
+|---|---|
+| `zip_monthly.json`, `division_monthly.json` | Offenses per month by ZIP and crime group, and by police division and crime category |
+| `daily_counts.json` | Offenses per city, day and crime category. Its city totals match `zip_monthly.json`. |
+| `hourly_counts.json` | Offenses per city, hour of day and crime group, for LA and SF (SD has no time of day) |
+| `city_population.json` | City population per year, 2020–2025, for per-100,000 rates |
+| `crime_categories.json`, `lapd_areas.json`, `metadata.json` | Category order and descriptions, LAPD area points, build dates and each city's date range |
+| `socioeconomic.csv`, `zip_codes.geojson`, `sfpd_districts.geojson` | ZIP socioeconomic rows and map shapes |
 
 It also writes `frontend/data/compatibility_report.md`. For each city it shows how many ZIPs and police divisions in the crime data match the socioeconomic CSV, the ZIP polygons and the division boundaries, and how many offenses have no usable geography. It names the San Diego ZIPs that have no polygon; those are PO boxes and out-of-area addresses, so they are reported but don't fail the step.
 
@@ -84,6 +94,7 @@ It also writes `frontend/data/compatibility_report.md`. For each city it shows h
 | `data/census/ca_socioeconomic_2018_present.csv` | Population, income, home value and poverty by ZIP and year, 2018 onward |
 | `data/boundaries/sf/sf_zcta_2020.geojson` | Fills SF ZIPs missing from the statewide file (currently 94188) |
 | `data/boundaries/sf/sfpd_districts_current.geojson` | Copied unchanged for the SF district layer |
+| `pipeline/crime_pipeline/lookups/city_population.csv` | City populations, 2020–2025, from the Census Bureau's Vintage 2025 city estimates (`sub-est2025_6.csv`, the file the per-capita notebook downloads). Update it when a new vintage is published. |
 
 ## Notebook
 

@@ -213,12 +213,15 @@ WHERE city = 'San Francisco' AND crime_category = 'Motor Vehicle Theft'
 
 `crime-pipeline export` turns `crime.db` into small static files for the website, which never opens the database. The files are committed to git. Rerun `export` after `load` to refresh them.
 
-Every count covers comparable offenses only: the three [default filters](#default-filters-for-honest-comparisons). Cities are codes: `LA`, `SD`, `SF`. A `null` `zip` or `division` means the offenses have no such geography. Those rows are kept, so each count file adds up to the city's total. JSON files are flat arrays of objects unless noted.
+Every count covers comparable offenses only: the three [default filters](#default-filters-for-honest-comparisons). Cities are codes: `LA`, `SD`, `SF`. A `null` `zip` or `division` means the offenses have no such geography. Those rows are kept, so each count file adds up to the city's total. `hourly_counts.json` is the exception: it leaves out offenses without a time. JSON files are flat arrays of objects unless noted.
 
 | File | One entry per | Fields |
 |---|---|---|
 | `zip_monthly.json` | city × month × ZIP × crime group | `city`, `month` (`'2025-01'`), `zip`, `group`, `count`. Built from `offenses`, because `daily_counts` has no ZIP. LA rows all have `zip: null`. |
 | `division_monthly.json` | city × month × police division × crime category | `city`, `month`, `division`, `category`, `count`. Built from `daily_counts`. |
+| `daily_counts.json` | city × day × crime category | `city`, `date` (`'2025-01-01'`), `category`, `count`. Built from `daily_counts`. Per city it adds up to the same total as `zip_monthly.json`. Days with no offenses in a category have no row. |
+| `hourly_counts.json` | city × hour of day × crime group | `city`, `hour` (integer, 0–23, Pacific), `group`, `count`. Built from `offenses`. LA and SF only: SD has no time of day, and offenses without a time are left out. |
+| `city_population.json` | city × year | `city`, `year` (2020–2025), `population`. Copied from `pipeline/crime_pipeline/lookups/city_population.csv`: Census Bureau Vintage 2025 city population estimates as of July 1 (`sub-est2025_6.csv`, the file `notebooks/PerCapitaRates.ipynb` uses). The denominator for offenses per 100,000 residents. There is no 2026 estimate yet, so use 2025 for 2026. |
 | `crime_categories.json` | shared category | `category`, `group`, `order`, `description` |
 | `lapd_areas.json` | LAPD area | `number`, `name` (matches `division`), `full_name`, `bureau`, `lat`, `lon` |
 | `metadata.json` | (one object) | `exported_at`, `database_built_at`, `pipeline_version`, `shared_window_start`, and `cities`: a list of `city`, `name`, `first_date`, `last_date`, `bounds` (the map box, `[[south, west], [north, east]]`) |
@@ -232,6 +235,9 @@ Months are complete except the last one in each city; check `last_date` in `meta
 `export` exits with code 1 when a San Francisco ZIP or police district in the data has no polygon. San Diego ZIPs without a polygon (PO boxes, out-of-area addresses) are listed in the report but don't fail the step.
 
 ## Change log
+
+**Web export: daily, hourly and population files**
+- Added `daily_counts.json`, `hourly_counts.json` and `city_population.json` to the `frontend/data/` bundle, and the `city_population.csv` lookup. `crime.db` is unchanged.
 
 **Web export**
 - Added `crime-pipeline export` and the `frontend/data/` bundle. `crime.db` is unchanged.
