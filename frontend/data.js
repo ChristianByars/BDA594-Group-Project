@@ -43,20 +43,20 @@ function populationsByCity(rows) {
 /**
  * Every file the page uses, plus lookups built from them:
  * cities (code -> metadata entry), groupOf (category -> group), socio (ZIP -> latest row),
- * populations (code -> year -> population), timedCities (codes that record the time of day).
+ * areaSocio (LAPD area name -> census estimates), populations (code -> year -> population),
+ * timedCities (codes that record the time of day).
  */
 export async function loadData() {
   const files = [
-    'metadata.json', 'crime_categories.json', 'lapd_areas.json', 'zip_monthly.json', 'division_monthly.json',
+    'metadata.json', 'crime_categories.json', 'zip_monthly.json', 'division_monthly.json',
     'daily_counts.json', 'hourly_counts.json', 'city_population.json', 'socioeconomic.csv', 'zip_codes.geojson',
-    'sfpd_districts.geojson',
+    'sfpd_districts.geojson', 'lapd_divisions.geojson', 'lapd_area_socioeconomic.json',
   ];
-  const [metadata, categories, lapdAreas, zipMonthly, divisionMonthly, dailyCounts, hourlyCounts, cityPopulation,
-    socioText, zipShapes, sfDistricts] = await Promise.all(files.map(fetchData));
+  const [metadata, categories, zipMonthly, divisionMonthly, dailyCounts, hourlyCounts, cityPopulation,
+    socioText, zipShapes, sfDistricts, lapdDivisions, areaEstimates] = await Promise.all(files.map(fetchData));
   return {
     metadata,
     categories,
-    lapdAreas,
     zipMonthly,
     divisionMonthly,
     dailyCounts,
@@ -64,6 +64,8 @@ export async function loadData() {
     timedCities: new Set(hourlyCounts.map((row) => row.city)),
     zipShapes,
     sfDistricts,
+    lapdDivisions,
+    areaSocio: Object.fromEntries(areaEstimates.map((estimate) => [estimate.area_name, estimate])),
     cities: Object.fromEntries(metadata.cities.map((city) => [city.city, city])),
     groupOf: Object.fromEntries(categories.map((category) => [category.category, category.group])),
     socio: latestSocioeconomic(socioText),

@@ -7,6 +7,9 @@ from collections import Counter
 from importlib.resources import files
 from pathlib import Path
 
+import pandas as pd
+import shapely
+
 from crime_pipeline import export, load
 from crime_pipeline.config import Paths
 
@@ -171,6 +174,90 @@ def test_compatibility_fails_only_for_unmatched_sf_geography():
     assert failures == []
 
 
+def test_compatibility_fails_for_an_lapd_area_without_a_polygon():
+    geography = [
+        {"city": "LA", "zip": None, "division": "Central", "count": 6},
+        {"city": "LA", "zip": None, "division": "Rampart", "count": 4},
+    ]
+    report, failures = export.check_compatibility(
+        geography, socio_zips=set(), polygon_zips=set(), division_boundaries={"LA": {"Central"}},
+    )
+    assert failures == ["Los Angeles area Rampart has no polygon"]
+    assert "| Police division → boundary | 2 | 1 | 6 of 10 (60.00%) |" in report
+
+    _, failures = export.check_compatibility(
+        geography, socio_zips=set(), polygon_zips=set(), division_boundaries={"LA": {"Central", "Rampart"}},
+    )
+    assert failures == []
+
+
+def box_feature(properties, west, south, east, north):
+    return {"type": "Feature", "properties": properties,
+            "geometry": shapely.geometry.mapping(shapely.box(west, south, east, north))}
+
+
+def test_area_estimates_weight_zips_by_their_area_inside_the_division():
+    # Division 0-2 wide: all of ZIP A (0-1) and half of ZIP B (1-3). ZIP C (5-6) is outside.
+    divisions = [box_feature({"area_number": 1, "area_name": "Central"}, 0, 0, 2, 1)]
+    zips = [box_feature({"ZIP_CODE": "A"}, 0, 0, 1, 1), box_feature({"ZIP_CODE": "B"}, 1, 0, 3, 1),
+            box_feature({"ZIP_CODE": "C"}, 5, 0, 6, 1)]
+    socio = pd.DataFrame({
+        "Year": ["2023", "2024", "2024", "2024"],
+        "Zip_Code": ["A", "A", "B", "C"],
+        "Total_Population": ["999", "100", "200", "500"],
+        "Median_Household_Income": ["1", "50000", "100000", "1"],
+        "Median_Home_Value": ["1", "-666666666", "800000", "1"],  # negative: no Census estimate
+        "Below_Poverty_Level": ["999", "10", "40", "500"],
+        "Poverty_Rate": ["", "10", "20", "100"],
+    })
+    assert export.area_socioeconomic(divisions, zips, socio) == [{
+        "area_number": 1, "area_name": "Central", "year": 2024,
+        "population": 200,            # 100 from A + half of B's 200
+        "below_poverty": 30,          # 10 + half of 40
+        "poverty_rate": 15.0,
+        "median_household_income": 75000,  # A and B each contribute 100 residents
+        "median_home_value": 800000,       # A has no value, so only B counts
+    }]
+
+
+def contributions(population, below_poverty, share=(1.0, 0.5)):
+    """latest_socioeconomic-style rows for two ZIPs; None marks a missing Census value."""
+    return pd.DataFrame({
+        "Year": [2024, 2024],
+        "Total_Population": pd.Series(population, dtype=float),
+        "Median_Household_Income": pd.Series([None, None], dtype=float),
+        "Median_Home_Value": pd.Series([None, None], dtype=float),
+        "Below_Poverty_Level": pd.Series(below_poverty, dtype=float),
+        "share": list(share),
+    })
+
+
+def test_area_estimate_keeps_missing_counts_apart_from_measured_zeros():
+    missing = export.area_estimate(contributions([100, 200], [None, None]))
+    assert (missing["population"], missing["below_poverty"], missing["poverty_rate"]) == (200, None, None)
+    assert missing["median_household_income"] is None
+
+    zero = export.area_estimate(contributions([100, 200], [0, 0]))
+    assert (zero["population"], zero["below_poverty"], zero["poverty_rate"]) == (200, 0, 0.0)
+
+    # The rate counts only the ZIP with both values: 10 of 100, not 10 of 200.
+    partial = export.area_estimate(contributions([100, 200], [10, None]))
+    assert (partial["below_poverty"], partial["poverty_rate"]) == (10, 10.0)
+
+
+def test_area_estimate_has_no_population_when_no_zip_has_one():
+    estimate = export.area_estimate(contributions([None, None], [10, 20]))
+    assert (estimate["population"], estimate["poverty_rate"]) == (None, None)
+    assert estimate["below_poverty"] == 20
+
+
+def test_population_comparison_uses_the_census_year_of_the_estimates():
+    estimates = [{"year": 2024, "population": 2_000_000}, {"year": 2024, "population": 1_872_710}]
+    assert export.population_comparison(estimates, export.city_populations()) == (
+        "LAPD area population estimates from 2024 ZIP data add up to 3,872,710; "
+        "the Census city estimate for 2024 is 3,872,710 (+0.0%).")
+
+
 def test_run_writes_the_bundle_and_fills_sf_zips_from_zcta(tmp_path):
     paths = Paths(tmp_path / "data", export_dir=tmp_path / "web")
     paths.data_dir.mkdir()
@@ -183,16 +270,29 @@ def test_run_writes_the_bundle_and_fills_sf_zips_from_zcta(tmp_path):
     (sf_dir / "sf_zcta_2020.geojson").write_text(json.dumps(collection(
         [feature({"ZCTA5": z}) for z in ["94110", "94188"]])))
     (sf_dir / "sfpd_districts_current.geojson").write_text(json.dumps(collection([feature({"district": "MISSION"})])))
+    la_dir = paths.boundaries_dir / "la"
+    la_dir.mkdir()
+    (la_dir / "lapd_divisions.geojson").write_text(json.dumps(collection(
+        [feature({"area_number": 1, "area_name": "Central", "area_full_name": "Central", "bureau": "Central"})])))
     paths.census_dir.mkdir()
     (paths.census_dir / export.SOCIOECONOMIC_FILE).write_text(
-        "Year,Zip_Code,Total_Population\n2023,92101,40000\n2023,90001,50000\n2023,94110,60000\n")
+        "Year,Zip_Code,Total_Population,Median_Household_Income,Median_Home_Value,Below_Poverty_Level\n"
+        "2023,92101,40000,1,1,1\n2023,90001,50000,60000,500000,5000\n2023,94110,60000,1,1,1\n")
 
     assert export.run(paths) == []
 
     written = {path.name for path in paths.export_dir.iterdir()}
     assert written == {"zip_monthly.json", "division_monthly.json", "daily_counts.json", "hourly_counts.json",
                        "city_population.json", "crime_categories.json", "lapd_areas.json", "metadata.json",
-                       "socioeconomic.csv", "zip_codes.geojson", "sfpd_districts.geojson", "compatibility_report.md"}
+                       "socioeconomic.csv", "zip_codes.geojson", "sfpd_districts.geojson",
+                       "lapd_divisions.geojson", "lapd_area_socioeconomic.json", "compatibility_report.md"}
+    # Every test ZIP is the same unit square, so the LA area takes all three ZIPs in full.
+    assert json.loads((paths.export_dir / "lapd_area_socioeconomic.json").read_text()) == [{
+        "area_number": 1, "area_name": "Central", "year": 2023, "population": 150000, "below_poverty": 5002,
+        "poverty_rate": 3.3, "median_household_income": 20001, "median_home_value": 166667,
+    }]
+    divisions = json.loads((paths.export_dir / "lapd_divisions.geojson").read_text())
+    assert [f["properties"]["area_name"] for f in divisions["features"]] == ["Central"]
     zip_codes = json.loads((paths.export_dir / "zip_codes.geojson").read_text())
     assert sorted(f["properties"]["ZIP_CODE"] for f in zip_codes["features"]) == ["92101", "94110", "94188"]
     assert "90001" not in (paths.export_dir / "socioeconomic.csv").read_text()

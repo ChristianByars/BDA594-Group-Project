@@ -7,6 +7,7 @@ CRIME_DATA_DIR environment variable or the CLI's --data-dir option. Layout:
     raw/sd/pd_nibrs_<year>_datasd.csv               (one per year)
     raw/sf/Police_Department_Incident_Reports*.csv  (newest file is used)
     boundaries/sf/*.geojson                          (from `fetch-boundaries`)
+    boundaries/la/lapd_divisions.geojson             (LAPD area polygons, from `fetch-boundaries`)
     boundaries/ca/ca_zip_codes.geojson               (statewide ZIP polygons, in git)
     census/ca_socioeconomic_2018_present.csv         (ZIP socioeconomic data, in git)
     cleaned/                                         (written by `clean`)

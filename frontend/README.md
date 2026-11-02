@@ -6,7 +6,7 @@ A static web page that compares crime in Los Angeles, San Diego and San Francisc
 |---|---|
 | `index.html` | Page layout: header, shared filter bar, tab bar and one panel per tab |
 | `app.js` | Entry point: loads the data, wires the filter bar, theme toggle and tabs, and renders the active tab |
-| `data.js` | Loads `data/` and builds lookups: city info, category groups, ZIP socioeconomic rows, city populations, cities that record the time of day |
+| `data.js` | Loads `data/` and builds lookups: city info, category groups, ZIP socioeconomic rows, LAPD area estimates, city populations, cities that record the time of day |
 | `filters.js` | The shared filter bar and the `filters` state object every tab reads |
 | `display.js` | City and crime-group colors for light and dark mode, number and date formats, shared Plotly drawing |
 | `trends.js` | Trends tab |
@@ -68,17 +68,38 @@ LA's Society and Other numbers are flagged wherever they appear. Its striped bar
 
 One city at a time. **City** lists the toggled cities and starts on the first one. The map uses the shared crime group and date filters, rounded out to whole months, because the map files are monthly.
 
-- **San Diego and San Francisco:** a ZIP map. **Map shows** switches between the offense count and offenses per 1,000 residents. Colors use quantile classes, so each shade covers about the same number of ZIPs. Hover a ZIP to see its offenses and its population, median household income, median home value and poverty rate. ZIP counts are kept by crime group only, so picking a category shows its whole group on the ZIP map.
-- **Los Angeles:** LAPD publishes locations by area only, so the map draws one circle per LAPD area at the area's center. The circle's area shows the offense count, and it does follow the category filter.
+- **Map shows** switches between the offense count and offenses per 1,000 residents, for every city. Colors use quantile classes, so each shade covers about the same number of ZIPs or areas, and the legend lists each class's range.
+- **San Diego and San Francisco:** a ZIP map. Hover a ZIP to see its offenses and its population, median household income, median home value and poverty rate. ZIP counts are kept by crime group only, so picking a category shows its whole group on the ZIP map.
+- **Los Angeles:** LAPD publishes locations by area only, so the map shades LAPD's 21 areas. Area counts are kept by category, so the shading follows the category filter. Hover an area to see its bureau, offenses, rate and census values. The census values are labelled "Estimated from ZIPs". The export estimates them by overlaying the ZIP polygons on each area: a ZIP counts in proportion to the share of its area inside the LAPD area, as if its residents were spread evenly. Rates use the estimated area population. Downtown's Central area has few residents, so its rate is far above the others.
 - **San Francisco districts:** dashed outlines show the current SFPD districts.
 
 ### Things to know on every tab
 
 - Counts cover comparable offenses only: crimes (not non-crime reports), no likely duplicates, from the shared start date (`2025-01-01`). See the [data contract](../backend/DATA_CONTRACT.md#default-filters-for-honest-comparisons).
-- Map rates use each ZIP's most recent `Total_Population` in the socioeconomic data. ZIPs with no residents (for example, campuses and PO-box ZIPs) are shown in gray.
+- Map rates use each ZIP's most recent `Total_Population` in the socioeconomic data, or each LAPD area's estimated population (`data/lapd_area_socioeconomic.json`). ZIPs with no residents (for example, campuses and PO-box ZIPs) are shown in gray.
 - The map only draws ZIPs whose polygon overlaps the city's box. The export tags each polygon with that city (`CITY_BOUNDS` in `backend/pipeline/crime_pipeline/export.py`). Some San Diego reports carry addresses far outside the city, and drawing them would skew the colors. Those offenses still count in the header total and the trend.
 - Each city's data ends on a different day, and the last few days fill in late. The Trends and category notes name the end date for any city that stops before the selected range does.
 - LA only includes offenses with a victim. Read the data contract's known limitations before comparing cities.
+
+## Sources
+
+What the page and its `data/` files come from. Publishers, links and dates are in the root README's [data sources and citations](../README.md#data-sources-and-citations).
+
+| Source | What the frontend uses it for |
+|---|---|
+| LAPD NIBRS Victims Dataset (data.lacity.org) | Los Angeles offense counts in every chart and the LA map |
+| SDPD Police NIBRS crime offenses (data.sandiego.gov) | San Diego offense counts in every chart and the SD ZIP map |
+| SFPD Incident Reports: 2018 to Present (DataSF) | San Francisco offense counts in every chart and the SF ZIP map |
+| SFPD district boundaries, current (DataSF `d4vc-q76h`) | Dashed district outlines on the SF map (`data/sfpd_districts.geojson`) |
+| Census TIGERweb 2020 ZIP Code Tabulation Areas | SF ZIP shapes missing from the statewide ZIP file, in `data/zip_codes.geojson` |
+| Census Bureau Vintage 2025 city population estimates (`sub-est2025_6.csv`) | Per-100,000 rates on the Trends and Compare tabs (`data/city_population.json`) |
+| LAPD Crime Data from 2020 to Present (data.lacity.org) | LAPD area center points in `data/lapd_areas.json`; the page doesn't read this file |
+| City of Los Angeles LAPD map service, reporting districts | LAPD area shapes on the LA map (`data/lapd_divisions.geojson`) |
+| `ca_zip_codes.geojson` (source to be confirmed) | ZIP shapes on the SD and SF maps, and the overlay behind the LA area estimates |
+| `ca_socioeconomic_2018_present.csv` (source to be confirmed) | ZIP tooltips and rates on the SD and SF maps, and the LA area estimates |
+| Leaflet 1.9.4 (unpkg CDN) | The Map tab |
+| Plotly.js 3.1.0 (Plotly CDN) | Trends and Compare charts |
+| Esri World Light Gray and World Dark Gray Canvas basemaps | Base map tiles for light and dark mode |
 
 ## Refreshing the data
 

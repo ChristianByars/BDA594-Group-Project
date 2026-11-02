@@ -41,8 +41,8 @@ crime-pipeline all      # clean → standardize → check → load → export (~
 | `crime-pipeline standardize` | `data/cleaned/` → `data/standardized/` |
 | `crime-pipeline check` | Quality checks. Exits with code 1 if any fail. |
 | `crime-pipeline load` | `data/standardized/` → `data/crime.db` |
-| `crime-pipeline export` | `data/crime.db` → `../frontend/data/`. Exits with code 1 if a San Francisco ZIP or police district has no polygon. |
-| `crime-pipeline fetch-boundaries` | Re-downloads the SF boundary files. They're already in git, so only needed to refresh them. |
+| `crime-pipeline export` | `data/crime.db` → `../frontend/data/`. Exits with code 1 if a San Francisco ZIP or police district, or an LAPD area, has no polygon. |
+| `crime-pipeline fetch-boundaries` | Re-downloads the SF boundary files and the LAPD division polygons. They're already in git, so only needed to refresh them. |
 
 `clean` and `standardize` accept `--cities LA SD SF` to run only some cities. To use a different data folder, pass `--data-dir <folder>` or set `CRIME_DATA_DIR`.
 
@@ -73,6 +73,10 @@ These are worked out from each crime's coordinates using the boundary files in `
 
 Each SF crime is matched against the district map in effect on the date it occurred.
 
+## LAPD division polygons
+
+LAPD reports each crime's area only, with no address or coordinates. For the website's LA map, `fetch-boundaries` downloads LAPD's reporting districts (about 1,135) from the City of Los Angeles LAPD map service and merges them by area number into `data/boundaries/la/lapd_divisions.geojson`. That file has 21 areas, named as in `lapd_areas.csv`. The service returns at most about 1,000 features per request, so the districts are fetched in pages.
+
 ## Website data bundle
 
 `crime-pipeline export` writes small pre-aggregated files to `frontend/data/`, so the website never opens `crime.db`. Run it after `load`, then commit `frontend/data/` so the site deploys without a rebuild. The files and their fields are listed in [DATA_CONTRACT.md](DATA_CONTRACT.md#web-export-frontenddata). The whole folder is about 8.5 MB; keep it under 10 MB.
@@ -85,8 +89,11 @@ Each SF crime is matched against the district map in effect on the date it occur
 | `city_population.json` | City population per year, 2020–2025, for per-100,000 rates |
 | `crime_categories.json`, `lapd_areas.json`, `metadata.json` | Category order and descriptions, LAPD area points, build dates and each city's date range |
 | `socioeconomic.csv`, `zip_codes.geojson`, `sfpd_districts.geojson` | ZIP socioeconomic rows and map shapes |
+| `lapd_divisions.geojson`, `lapd_area_socioeconomic.json` | Simplified LAPD area shapes, and population, income, home value and poverty estimated per area from the ZIPs that overlap it |
 
 It also writes `frontend/data/compatibility_report.md`. For each city it shows how many ZIPs and police divisions in the crime data match the socioeconomic CSV, the ZIP polygons and the division boundaries, and how many offenses have no usable geography. It names the San Diego ZIPs that have no polygon; those are PO boxes and out-of-area addresses, so they are reported but don't fail the step.
+
+The LAPD area estimates weight each overlapping ZIP by the share of its area inside the LAPD area; [DATA_CONTRACT.md](DATA_CONTRACT.md#web-export-frontenddata) gives the method. `export` prints how the 21 estimated populations add up against the Census city population for the same year; expect them to be within about 10%.
 
 | Input | Contents |
 |---|---|
@@ -94,7 +101,27 @@ It also writes `frontend/data/compatibility_report.md`. For each city it shows h
 | `data/census/ca_socioeconomic_2018_present.csv` | Population, income, home value and poverty by ZIP and year, 2018 onward |
 | `data/boundaries/sf/sf_zcta_2020.geojson` | Fills SF ZIPs missing from the statewide file (currently 94188) |
 | `data/boundaries/sf/sfpd_districts_current.geojson` | Copied unchanged for the SF district layer |
+| `data/boundaries/la/lapd_divisions.geojson` | LAPD area polygons, simplified for the LA map and overlaid on the ZIP polygons for the area estimates |
 | `pipeline/crime_pipeline/lookups/city_population.csv` | City populations, 2020–2025, from the Census Bureau's Vintage 2025 city estimates (`sub-est2025_6.csv`, the file the per-capita notebook downloads). Update it when a new vintage is published. |
+
+## Sources
+
+Datasets and services the pipeline and notebooks read. Publishers, links and dates are in the root README's [data sources and citations](../README.md#data-sources-and-citations).
+
+| Source | What the backend uses it for |
+|---|---|
+| LAPD NIBRS Victims Dataset (data.lacity.org) | Los Angeles crimes: one row per victim, combined into offenses |
+| SDPD Police NIBRS crime offenses (data.sandiego.gov) | San Diego crimes, with address ZIP, coordinates and police division |
+| SFPD Incident Reports: 2018 to Present (DataSF) | San Francisco crimes, with coordinates for district and ZIP matching |
+| SFPD district boundaries, 2015 to 2026 and current (DataSF `bj3n-hmgf`, `d4vc-q76h`) | Assigns SF crimes to the district map in effect on their date; `fetch-boundaries` downloads them |
+| Census TIGERweb 2020 ZIP Code Tabulation Areas (ZCTA) | Assigns SF crimes to a ZIP; fills SF ZIPs missing from the statewide ZIP file |
+| Census Bureau Vintage 2025 city population estimates (`sub-est2025_6.csv`) | `city_population.csv` for per-100,000 rates and the LAPD area population check; `PerCapitaRates.ipynb` downloads it |
+| LAPD Crime Data from 2020 to Present (data.lacity.org) | LAPD area center points in `lapd_areas.csv` |
+| lapdonline.org | LAPD bureau assignments in `lapd_areas.csv` |
+| FBI National Incident-Based Reporting System (NIBRS) offense definitions | Codes, descriptions, categories and flags in `nibrs_offenses.csv` |
+| City of Los Angeles LAPD map service, reporting districts | The 21 LAPD area polygons; `fetch-boundaries` downloads and merges them |
+| `ca_zip_codes.geojson` (source to be confirmed) | ZIP polygons for the web export and the LAPD area overlay |
+| `ca_socioeconomic_2018_present.csv` (source to be confirmed) | ZIP socioeconomic rows for the web export and the LAPD area estimates |
 
 ## Notebook
 
@@ -131,7 +158,7 @@ backend/
 │  ├─ cities/          la.py, sd.py, sf.py: clean() and standardize() per city
 │  ├─ standardize.py   runs clean / standardize for each city
 │  ├─ enrich.py        shared categories, NIBRS details, LAPD areas, SF geography
-│  ├─ geo.py           SF district + ZIP matching; fetch-boundaries
+│  ├─ geo.py           SF district + ZIP matching, LAPD division polygons; fetch-boundaries
 │  ├─ lookups/         editable CSV mappings
 │  ├─ checks.py        quality checks
 │  ├─ schema.sql       crime.db tables
