@@ -7,6 +7,9 @@
     lapd_areas.csv        LAPD area number, bureau and center point (mean of 2020-2024 crime
                           locations from LAPD "Crime Data from 2020 to Present"; bureaus from
                           lapdonline.org)
+    city_population.csv   city population by year, 2020-2025 (Census Bureau Vintage 2025 city
+                          estimates, sub-est2025_6.csv, as of July 1); used by `export` only,
+                          not loaded into crime.db
 
 Edit the CSVs to change a mapping, then rerun `crime-pipeline all`.
 """

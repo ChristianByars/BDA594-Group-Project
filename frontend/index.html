@@ -9,71 +9,141 @@
   <script src="https://cdn.plot.ly/plotly-3.1.0.min.js"></script>
 </head>
 <body>
-  <div class="app-shell">
-    <div id="mobileOverlay" class="mobile-overlay"></div><aside id="sidebar" class="sidebar"><button id="closeSidebarBtn" class="close-sidebar-btn" type="button" aria-label="Close filters">&times;</button>
-      <div class="brand">
+  <main class="dashboard-container">
+    <section class="header-card">
+      <div class="header-text">
         <div class="eyebrow">California Crime Dashboard</div>
-        <h1>City Crime Explorer</h1>
-        <p>Offenses in Los Angeles, San Diego and San Francisco by ZIP code or police area, next to ZIP socioeconomic data.</p>
-
-        <button
-        id="themeToggle"
-        class="theme-toggle secondary"
-        type="button"
-        aria-pressed="false"
-      >
+        <h1>Los Angeles, San Diego and San Francisco compared</h1>
+        <div id="dashboardMeta" class="meta"></div>
+      </div>
+      <button id="themeToggle" class="theme-toggle secondary" type="button" aria-pressed="false">
         <span id="themeToggleText">Dark mode</span>
       </button>
+    </section>
+
+    <section class="filter-bar" aria-label="Filters">
+      <div class="filter-field">
+        <span class="field-label">Cities</span>
+        <div id="cityToggles" class="city-toggles"></div>
+      </div>
+      <label class="filter-field">
+        Crime group
+        <select id="groupSelect"></select>
+      </label>
+      <label class="filter-field wide">
+        Category
+        <select id="categorySelect"></select>
+      </label>
+      <label class="filter-field">
+        Dates
+        <select id="rangePreset"></select>
+      </label>
+      <label class="filter-field">
+        From
+        <input id="startDate" type="date">
+      </label>
+      <label class="filter-field">
+        To
+        <input id="endDate" type="date">
+      </label>
+      <label class="filter-field wide">
+        Measure
+        <select id="measureSelect">
+          <option value="count">Offense count</option>
+          <option value="rate">Per 100,000 residents</option>
+        </select>
+      </label>
+      <p id="filterNote" class="filter-note" hidden></p>
+    </section>
+
+    <div id="tabBar" class="dashboard-tabs tab-bar" role="tablist" aria-label="Dashboards">
+      <button class="dashboard-tab active" type="button" role="tab" data-tab="trends" aria-selected="true" aria-controls="trendsPanel">Trends</button>
+      <button class="dashboard-tab" type="button" role="tab" data-tab="compare" aria-selected="false" aria-controls="comparePanel">Compare</button>
+      <button class="dashboard-tab" type="button" role="tab" data-tab="map" aria-selected="false" aria-controls="mapPanel">Map</button>
     </div>
 
-      <form id="filters" class="filter-form">
+    <section id="trendsPanel" class="section-card tab-panel" role="tabpanel" aria-label="Trends">
+      <h2>Offenses over time</h2>
+      <form id="trendControls" class="explorer-controls">
         <label>
-          City
-          <select id="citySelect"></select>
-        </label>
-        <label>
-          Crime group
-          <select id="groupSelect">
-            <option value="">All crime groups</option>
+          Layout
+          <select id="trendLayout">
+            <option value="overlay">Cities overlaid</option>
+            <option value="multiples">One panel per city</option>
           </select>
         </label>
         <label>
-          From
-          <select id="startMonth"></select>
+          Period
+          <select id="trendGranularity">
+            <option value="day">Day</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+          </select>
         </label>
         <label>
-          To
-          <select id="endMonth"></select>
+          Rolling average
+          <select id="trendRolling">
+            <option value="0">None</option>
+            <option value="7">7-day</option>
+            <option value="28">28-day</option>
+          </select>
         </label>
-        <label id="measureField">
+        <label class="check-field">
+          <input id="trendIndexed" type="checkbox">
+          Index to 100 at the start
+        </label>
+      </form>
+      <div id="trendChart" class="chart"></div>
+      <p id="trendNote" class="subtle chart-note"></p>
+    </section>
+
+    <section id="comparePanel" class="section-card tab-panel" role="tabpanel" aria-label="Compare" hidden>
+      <h2>Compare cities</h2>
+      <p class="subtle">How the selected cities differ in volume, crime mix and timing. Hover a bar or point for its value.</p>
+
+      <h3>Offenses by category</h3>
+      <div id="compareCategories" class="chart"></div>
+      <p id="compareCategoriesNote" class="subtle chart-note"></p>
+
+      <h3>Crime mix</h3>
+      <div id="compareMix" class="chart"></div>
+      <p id="compareMixNote" class="subtle chart-note"></p>
+
+      <div class="compare-grid">
+        <div>
+          <h3>Day of week</h3>
+          <div id="compareWeekdays" class="chart"></div>
+          <p id="compareWeekdaysNote" class="subtle chart-note"></p>
+        </div>
+        <div>
+          <h3>Hour of day</h3>
+          <div id="compareHours" class="chart"></div>
+          <p id="compareHoursNote" class="subtle chart-note"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="mapPanel" class="section-card tab-panel" role="tabpanel" aria-label="Map" hidden>
+      <h2 id="mapTitle">Map</h2>
+      <form id="mapControls" class="explorer-controls">
+        <label>
+          City
+          <select id="mapCity"></select>
+        </label>
+        <label id="mapMeasureField">
           Map shows
-          <select id="measureSelect">
+          <select id="mapMeasure">
             <option value="count">Offense count</option>
             <option value="rate">Offenses per 1,000 residents</option>
           </select>
         </label>
       </form>
-      <div id="status" class="status">Loading data…</div>
-    </aside>
+      <div id="mapNote" class="subtle"></div>
+      <div id="mapChart" class="chart map-chart"></div>
+    </section>
 
-    <main class="dashboard-container">
-      <section class="header-card">
-        <div class="header-titles"><button id="mobileFilterBtn" class="mobile-filter-btn" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg> Filters</button><div class="header-text"><div class="eyebrow">California Crime Dashboard</div>
-          <h2 id="dashboardTitle">Crime map</h2><div id="dashboardMeta" class="meta"></div></div></div>
-      </section>
-
-      <section id="mapSection" class="section-card">
-        <h2 id="mapTitle">Map</h2>
-        <div id="mapNote" class="subtle"></div>
-        <div id="mapChart" class="chart map-chart"></div>
-      </section>
-
-      <section id="trendSection" class="section-card">
-        <h2>Monthly trend</h2>
-        <div id="trendChart" class="chart"></div>
-      </section>
-    </main>
-  </div>
+    <div id="status" class="status">Loading data…</div>
+  </main>
   <script type="module" src="app.js"></script>
 </body>
 </html>

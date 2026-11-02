@@ -1,6 +1,6 @@
 # Data compatibility report
 
-Written by `crime-pipeline export` at 2026-11-02T20:35:22+00:00 from crime.db built at 2026-10-08T21:17:51+00:00. Counts are comparable offenses: is_crime = 1, possible_duplicate = 0, occurred_date >= 2025-01-01.
+Written by `crime-pipeline export` at 2026-11-02T21:49:29+00:00 from crime.db built at 2026-10-08T21:17:51+00:00. Counts are comparable offenses: is_crime = 1, possible_duplicate = 0, occurred_date >= 2025-01-01.
 
 SF ZIPs missing from the statewide ZIP file, filled from the Census ZCTA file: 94188.
 

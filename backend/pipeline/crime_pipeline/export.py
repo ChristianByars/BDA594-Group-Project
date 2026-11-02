@@ -5,6 +5,9 @@ data folder, and writes small pre-aggregated files to Paths.export_dir (frontend
 
     zip_monthly.json          offenses per city, month, ZIP and crime group
     division_monthly.json     offenses per city, month, police division and crime category
+    daily_counts.json         offenses per city, day and crime category
+    hourly_counts.json        offenses per city, hour of day and crime group (LA and SF; SD has no time)
+    city_population.json      city population per year, from lookups/city_population.csv
     crime_categories.json     shared categories with group, display order and description
     lapd_areas.json           LAPD areas with map center points
     metadata.json             build dates, shared window, each city's date range and map box
@@ -17,6 +20,7 @@ data folder, and writes small pre-aggregated files to Paths.export_dir (frontend
 Counts cover comparable offenses only: the three default filters in DATA_CONTRACT.md.
 Cities are written as codes (LA, SD, SF). A null zip or division marks offenses
 without that geography; they are kept so each count file adds up to the city total.
+The hourly file is the exception: offenses without a time are left out.
 """
 
 import json
@@ -27,7 +31,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import shapely
 
-from crime_pipeline import geo
+from crime_pipeline import geo, lookups
 from crime_pipeline.common import CITY_INFO, READ_AS_TEXT
 
 SOCIOECONOMIC_FILE = "ca_socioeconomic_2018_present.csv"
@@ -68,6 +72,23 @@ FROM daily_counts
 WHERE {DEFAULT_FILTERS}
 GROUP BY city, month, police_division, crime_category
 ORDER BY city, month, police_division, crime_category
+"""
+
+DAILY_COUNTS = f"""
+SELECT city, occurred_date AS date, crime_category AS category, SUM(offense_count) AS count
+FROM daily_counts
+WHERE {DEFAULT_FILTERS}
+GROUP BY city, occurred_date, crime_category
+ORDER BY city, occurred_date, crime_category
+"""
+
+# Times are 'HH:MM'; rows without a time (all of SD) are left out.
+HOURLY_COUNTS = f"""
+SELECT city, CAST(substr(occurred_time, 1, 2) AS INTEGER) AS hour, crime_group AS "group", COUNT(*) AS count
+FROM offenses
+WHERE {DEFAULT_FILTERS} AND occurred_time IS NOT NULL
+GROUP BY city, hour, crime_group
+ORDER BY city, hour, crime_group
 """
 
 DATE_RANGES = f"""
@@ -113,6 +134,13 @@ def query(db, sql):
 
 def write_json(path, data):
     path.write_text(json.dumps(data, separators=(",", ":")))
+
+
+def city_populations():
+    """Rows of {city code, year, population} from lookups/city_population.csv, as integers."""
+    table = lookups.read("city_population")
+    return [{"city": CITY_CODES[row.city], "year": int(row.year), "population": int(row.population)}
+            for row in table.itertuples(index=False)]
 
 
 def clip_zip_polygons(statewide, zips):
@@ -227,11 +255,14 @@ def run(paths):
         date_ranges = query(db, DATE_RANGES)
         write_json(out / "zip_monthly.json", query(db, ZIP_MONTHLY))
         write_json(out / "division_monthly.json", query(db, DIVISION_MONTHLY))
+        write_json(out / "daily_counts.json", query(db, DAILY_COUNTS))
+        write_json(out / "hourly_counts.json", query(db, HOURLY_COUNTS))
         write_json(out / "crime_categories.json", query(db, CATEGORIES))
     finally:
         db.close()
 
     exported_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    write_json(out / "city_population.json", city_populations())
     write_json(out / "lapd_areas.json", lapd_areas)
     write_json(out / "metadata.json", {
         "exported_at": exported_at,

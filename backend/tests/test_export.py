@@ -1,7 +1,9 @@
-"""Web export: filtered monthly counts, ZIP polygon clipping and the compatibility check, on made-up data."""
+"""Web export: filtered monthly, daily and hourly counts, city populations, ZIP polygon clipping and the
+compatibility check, on made-up data."""
 
 import json
 import sqlite3
+from collections import Counter
 from importlib.resources import files
 from pathlib import Path
 
@@ -10,18 +12,18 @@ from crime_pipeline.config import Paths
 
 SQUARE = {"type": "Polygon", "coordinates": [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]}
 
-# (city, occurred_date, crime_category, crime_group, police_division, zip, is_crime, possible_duplicate)
+# (city, occurred_date, occurred_time, crime_category, crime_group, police_division, zip, is_crime, possible_duplicate)
 OFFENSES = [
-    ("San Diego", "2025-01-05", "Robbery", "Violent", "Central", "92101", 1, 0),
-    ("San Diego", "2025-01-20", "Robbery", "Violent", "Central", "92101", 1, 0),
-    ("San Diego", "2025-02-01", "Burglary", "Property", "Central", "92101", 1, 0),
-    ("San Diego", "2024-12-31", "Robbery", "Violent", "Central", "92101", 1, 0),          # before the window
-    ("San Francisco", "2025-01-03", "Non-Crime", "Non-Crime", "Mission", "94110", 0, 0),  # not a crime
-    ("San Francisco", "2025-01-04", "Theft", "Property", "Mission", "94110", 1, 1),       # duplicate report
-    ("San Francisco", "2025-01-04", "Theft", "Property", "Mission", "94110", 1, 0),
-    ("San Francisco", "2025-01-05", "Theft", "Property", None, None, 1, 0),               # no coordinates
-    ("San Francisco", "2025-01-06", "Theft", "Property", "Mission", "94188", 1, 0),
-    ("Los Angeles", "2025-01-07", "Robbery", "Violent", "Central", None, 1, 0),
+    ("San Diego", "2025-01-05", None, "Robbery", "Violent", "Central", "92101", 1, 0),
+    ("San Diego", "2025-01-20", None, "Robbery", "Violent", "Central", "92101", 1, 0),
+    ("San Diego", "2025-02-01", None, "Burglary", "Property", "Central", "92101", 1, 0),
+    ("San Diego", "2024-12-31", None, "Robbery", "Violent", "Central", "92101", 1, 0),                 # before the window
+    ("San Francisco", "2025-01-03", "01:15", "Non-Crime", "Non-Crime", "Mission", "94110", 0, 0),  # not a crime
+    ("San Francisco", "2025-01-04", "12:00", "Theft", "Property", "Mission", "94110", 1, 1),       # duplicate report
+    ("San Francisco", "2025-01-04", "12:45", "Theft", "Property", "Mission", "94110", 1, 0),
+    ("San Francisco", "2025-01-05", None, "Theft", "Property", None, None, 1, 0),                  # no coordinates or time
+    ("San Francisco", "2025-01-06", "23:05", "Theft", "Property", "Mission", "94188", 1, 0),
+    ("Los Angeles", "2025-01-07", "12:30", "Robbery", "Violent", "Central", None, 1, 0),
 ]
 
 
@@ -30,8 +32,9 @@ def build_database(path):
     db.executescript(files("crime_pipeline").joinpath("schema.sql").read_text())
     rows = [(city, "County", "06000", str(i), str(i), *rest) for i, (city, *rest) in enumerate(OFFENSES)]
     db.executemany("""INSERT INTO offenses (city, county, county_fips, source_row_id, case_id, occurred_date,
-                      crime_category, crime_group, police_division, zip, is_crime, possible_duplicate)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", rows)
+                      occurred_time, crime_category, crime_group, police_division, zip, is_crime,
+                      possible_duplicate)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", rows)
     db.execute(load.BUILD_DAILY_COUNTS)
     db.executemany("INSERT INTO metadata VALUES (?, ?)", [
         ("built_at", "2025-03-01T00:00:00+00:00"), ("pipeline_version", "test"), ("shared_window_start", "2025-01-01"),
@@ -69,6 +72,44 @@ def test_monthly_counts_apply_the_default_filters(tmp_path):
     ]
 
 
+def test_daily_counts_add_up_to_the_monthly_zip_totals(tmp_path):
+    db = build_database(tmp_path / "crime.db")
+    daily = export.query(db, export.DAILY_COUNTS)
+    assert daily == [
+        {"city": "LA", "date": "2025-01-07", "category": "Robbery", "count": 1},
+        {"city": "SD", "date": "2025-01-05", "category": "Robbery", "count": 1},
+        {"city": "SD", "date": "2025-01-20", "category": "Robbery", "count": 1},
+        {"city": "SD", "date": "2025-02-01", "category": "Burglary", "count": 1},
+        {"city": "SF", "date": "2025-01-04", "category": "Theft", "count": 1},
+        {"city": "SF", "date": "2025-01-05", "category": "Theft", "count": 1},
+        {"city": "SF", "date": "2025-01-06", "category": "Theft", "count": 1},
+    ]
+    daily_totals = Counter()
+    for row in daily:
+        daily_totals[row["city"]] += row["count"]
+    zip_totals = Counter()
+    for row in export.query(db, export.ZIP_MONTHLY):
+        zip_totals[row["city"]] += row["count"]
+    assert daily_totals == zip_totals
+
+
+def test_hourly_counts_skip_offenses_without_a_time(tmp_path):
+    db = build_database(tmp_path / "crime.db")
+    assert export.query(db, export.HOURLY_COUNTS) == [
+        {"city": "LA", "hour": 12, "group": "Violent", "count": 1},
+        {"city": "SF", "hour": 12, "group": "Property", "count": 1},
+        {"city": "SF", "hour": 23, "group": "Property", "count": 1},
+    ]
+
+
+def test_city_populations_cover_each_city_from_2020_to_2025():
+    populations = export.city_populations()
+    assert len(populations) == 18
+    assert {(row["city"], row["year"]) for row in populations} == {
+        (city, year) for city in ["LA", "SD", "SF"] for year in range(2020, 2026)}
+    assert {"city": "SF", "year": 2025, "population": 826079} in populations
+
+
 def test_clip_keeps_only_requested_zips():
     statewide = collection([feature({"ZIP_CODE": z}) for z in ["92101", "92102", "94110"]])
     clipped = export.clip_zip_polygons(statewide, {"92101", "94110", "99999"})
@@ -94,6 +135,17 @@ def test_committed_bundle_maps_every_sf_zip():
     sf_mapped = {f["properties"]["ZIP_CODE"] for f in shapes if f["properties"]["city"] == "SF"}
     assert "94132" in sf_mapped
     assert sf_zips <= sf_mapped
+
+
+def test_committed_daily_counts_match_the_zip_totals():
+    bundle = Path(__file__).resolve().parents[2] / "frontend" / "data"
+    totals = {}
+    for name in ["daily_counts.json", "zip_monthly.json"]:
+        city_totals = Counter()
+        for row in json.loads((bundle / name).read_text()):
+            city_totals[row["city"]] += row["count"]
+        totals[name] = city_totals
+    assert totals["daily_counts.json"] == totals["zip_monthly.json"]
 
 
 def test_compatibility_fails_only_for_unmatched_sf_geography():
@@ -138,9 +190,9 @@ def test_run_writes_the_bundle_and_fills_sf_zips_from_zcta(tmp_path):
     assert export.run(paths) == []
 
     written = {path.name for path in paths.export_dir.iterdir()}
-    assert written == {"zip_monthly.json", "division_monthly.json", "crime_categories.json", "lapd_areas.json",
-                       "metadata.json", "socioeconomic.csv", "zip_codes.geojson", "sfpd_districts.geojson",
-                       "compatibility_report.md"}
+    assert written == {"zip_monthly.json", "division_monthly.json", "daily_counts.json", "hourly_counts.json",
+                       "city_population.json", "crime_categories.json", "lapd_areas.json", "metadata.json",
+                       "socioeconomic.csv", "zip_codes.geojson", "sfpd_districts.geojson", "compatibility_report.md"}
     zip_codes = json.loads((paths.export_dir / "zip_codes.geojson").read_text())
     assert sorted(f["properties"]["ZIP_CODE"] for f in zip_codes["features"]) == ["92101", "94110", "94188"]
     assert "90001" not in (paths.export_dir / "socioeconomic.csv").read_text()
