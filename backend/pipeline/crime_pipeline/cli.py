@@ -53,7 +53,7 @@ def main(argv=None):
     parser.add_argument("--data-dir", help="data folder (default: $CRIME_DATA_DIR or backend/data/)")
     steps = parser.add_subparsers(dest="step", required=True)
 
-    steps.add_parser("fetch-boundaries", help="download SF district and ZIP boundary files (one time)") \
+    steps.add_parser("fetch-boundaries", help="download SF district and ZIP boundaries and LAPD division polygons (one time)") \
         .set_defaults(func=cmd_fetch_boundaries)
     for name, func, help_text in [("clean", cmd_clean, "raw/ -> cleaned/ (each city's own columns)"),
                                   ("standardize", cmd_standardize, "cleaned/ -> standardized/ (shared layout)")]:

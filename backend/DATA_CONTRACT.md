@@ -4,6 +4,8 @@ This is the reference for building the website on top of the crime database. `cr
 
 The static website doesn't open the database. It reads the small files that `crime-pipeline export` writes to `frontend/data/`; see [Web export](#web-export-frontenddata).
 
+Every source dataset, with its publisher, link and date, is listed in the root README's [data sources and citations](../README.md#data-sources-and-citations).
+
 **Stability promise:** later pipeline stages may **add** tables and columns. Existing table and column names will not be renamed or removed without updating this file. See the [change log](#change-log) for what changed and when.
 
 ## Connecting from TypeScript
@@ -126,7 +128,7 @@ The LA / SD / SF columns show how often each column is filled.
 
 Key: ✓ = filled for all or nearly all rows, a percentage = partly filled, — = the city doesn't have it, blank = not applicable.
 
-**Mapping LA:** every LA row in an area has the same coordinates. Don't plot LA rows as individual points. Aggregate by `police_division` and draw one marker or shaded area per LAPD area.
+**Mapping LA:** every LA row in an area has the same coordinates. Don't plot LA rows as individual points. Aggregate by `police_division` and draw one marker or shaded area per LAPD area. The web export has the area polygons (`lapd_divisions.geojson`).
 
 ### `daily_counts`: pre-aggregated for charts
 
@@ -228,13 +230,21 @@ Every count covers comparable offenses only: the three [default filters](#defaul
 | `socioeconomic.csv` | ZIP × year | The rows of `backend/data/census/ca_socioeconomic_2018_present.csv` for ZIPs in the SD or SF data: `Year`, `Zip_Code`, `Total_Population`, `Median_Household_Income`, `Median_Home_Value`, `Below_Poverty_Level`, `Poverty_Rate` |
 | `zip_codes.geojson` | ZIP polygon | Features of `backend/data/boundaries/ca/ca_zip_codes.geojson` for ZIPs in the SD or SF data, keyed by `properties.ZIP_CODE`. SF ZIPs missing from that file come from the SF Census ZCTA file. `properties.city` is the city whose map box the polygon overlaps, or `null` for out-of-area ZIPs. |
 | `sfpd_districts.geojson` | SFPD district | `boundaries/sf/sfpd_districts_current.geojson`, unchanged. `properties.district` is upper case; title-case it to match `division`. |
-| `compatibility_report.md` | (report) | Per city: ZIPs and divisions in the data versus the files above, and offenses with no usable geography |
+| `lapd_divisions.geojson` | LAPD area polygon (21) | `boundaries/la/lapd_divisions.geojson`, simplified to about 10 m and rounded to 5 decimal places. Properties: `area_number`, `area_name` (matches `division`), `area_full_name`, `bureau`. |
+| `lapd_area_socioeconomic.json` | LAPD area (21) | `area_number`, `area_name` (matches `division`), `year` (latest census year used), `population`, `below_poverty`, `poverty_rate` (percent), `median_household_income`, `median_home_value`. **Estimates**, not census counts: see below. Missing values are `null`. |
+| `compatibility_report.md` | (report) | Per city: ZIPs and divisions in the data versus the files above, and offenses with no usable geography. Also compares the summed LAPD area population estimates with the Census city population. |
 
 Months are complete except the last one in each city; check `last_date` in `metadata.json`.
 
-`export` exits with code 1 when a San Francisco ZIP or police district in the data has no polygon. San Diego ZIPs without a polygon (PO boxes, out-of-area addresses) are listed in the report but don't fail the step.
+**LAPD area estimates.** LA crimes have no address or ZIP, so census values per LAPD area are estimated from the ZIP data. Each ZIP polygon in `ca_zip_codes.geojson` that overlaps an area contributes the fraction of its area inside the area (`intersection area / ZIP area`). Population and below-poverty counts are the sums of each ZIP's value times that fraction. Median household income and median home value are averages of the ZIP medians, weighted by the population each ZIP contributes. The poverty rate is `below_poverty / population`, counting only ZIPs that have both values. Each ZIP uses its latest year in `ca_socioeconomic_2018_present.csv`; negative or empty values in that file mean no Census estimate and are skipped. A field is `null` when no overlapping ZIP has the value, so `null` means unknown and `0` means a measured zero. The estimates assume people are spread evenly across each ZIP, so treat them as approximate. `export` prints how the 21 estimates add up against the Census city population for the same year.
+
+`export` exits with code 1 when a San Francisco ZIP or police district, or an LAPD area, in the data has no polygon, or when an LAPD area has no estimated population. San Diego ZIPs without a polygon (PO boxes, out-of-area addresses) are listed in the report but don't fail the step.
 
 ## Change log
+
+**Web export: LAPD area polygons and estimates**
+- Added `lapd_divisions.geojson` and `lapd_area_socioeconomic.json` to the `frontend/data/` bundle, from the new `backend/data/boundaries/la/lapd_divisions.geojson` (written by `crime-pipeline fetch-boundaries`). `crime.db` is unchanged.
+- The compatibility check now matches LA areas against the division polygons instead of the `lapd_areas` center points. `export` fails when an LAPD area has no polygon or no estimated population.
 
 **Web export: daily, hourly and population files**
 - Added `daily_counts.json`, `hourly_counts.json` and `city_population.json` to the `frontend/data/` bundle, and the `city_population.csv` lookup. `crime.db` is unchanged.

@@ -1,4 +1,4 @@
-// Map tab: one city at a time. SD and SF are shaded by ZIP; LA gets one circle per LAPD area.
+// Map tab: one city at a time. SD and SF are shaded by ZIP; LA is shaded by LAPD area.
 
 import * as L from 'https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js';
 
@@ -10,7 +10,7 @@ const SEQUENTIAL = ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184
 const NO_DATA_COLOR = '#d1d5db';
 
 const elements = Object.fromEntries([
-  'mapControls', 'mapCity', 'mapMeasureField', 'mapMeasure', 'mapTitle', 'mapNote', 'mapChart',
+  'mapControls', 'mapCity', 'mapMeasure', 'mapTitle', 'mapNote', 'mapChart',
 ].map((id) => [id, document.getElementById(id)]));
 
 let map = null;
@@ -40,8 +40,9 @@ function zipCounts(data, city, months) {
   return counts;
 }
 
+/** Offenses per LAPD area for the selection, by category. Every area is listed, at 0 if none match. */
 function areaCounts(data, months) {
-  const counts = Object.fromEntries(data.lapdAreas.map((area) => [area.name, 0]));
+  const counts = Object.fromEntries(data.lapdDivisions.features.map((feature) => [feature.properties.area_name, 0]));
   for (const row of data.divisionMonthly) {
     if (row.city === 'LA' && row.division in counts && inMonths(row, months) && categoryMatches(data, row.category)) {
       counts[row.division] += row.count;
@@ -50,8 +51,7 @@ function areaCounts(data, months) {
   return counts;
 }
 
-function perThousand(count, socio) {
-  const population = socio?.Total_Population;
+function perThousand(count, population) {
   return population ? (count * 1000) / population : null;
 }
 
@@ -92,42 +92,74 @@ function updateLegend(breaks, values, measure) {
   legend.getContainer().innerHTML = known.length ? `<strong>${title}</strong>${items.join('')}` : '';
 }
 
+/** Tooltip lines for census values; missing values show as n/a. */
+function censusLines(populationLabel, { population, income, homeValue, povertyRate }) {
+  const show = (label, value, format) => `${label}: ${value == null ? 'n/a' : format(value)}`;
+  const dollars = (value) => `$${formatNumber(value)}`;
+  return [
+    show(populationLabel, population, formatNumber),
+    show('Median household income', income, dollars),
+    show('Median home value', homeValue, dollars),
+    show('Poverty rate', povertyRate, (value) => `${formatNumber(value, 1)}%`),
+  ];
+}
+
 function zipTooltip(zip, placeName, count, socio) {
   const lines = [`<b>ZIP ${zip}</b>${placeName ? ` · ${placeName}` : ''}`, `Offenses: ${formatNumber(count)}`];
-  const rate = perThousand(count, socio);
+  const rate = perThousand(count, socio?.Total_Population);
   if (rate !== null) lines.push(`Per 1,000 residents: ${formatRate(rate)}`);
   if (!socio) return [...lines, 'No socioeconomic data'].join('<br>');
-  const show = (label, value, format) => lines.push(`${label}: ${value === null ? 'n/a' : format(value)}`);
-  show(`Population (${socio.Year})`, socio.Total_Population, (value) => formatNumber(value));
-  show('Median household income', socio.Median_Household_Income, (value) => `$${formatNumber(value)}`);
-  show('Median home value', socio.Median_Home_Value, (value) => `$${formatNumber(value)}`);
-  show('Poverty rate', socio.Poverty_Rate, (value) => `${formatNumber(value, 1)}%`);
+  lines.push(...censusLines(`Population (${socio.Year})`, {
+    population: socio.Total_Population,
+    income: socio.Median_Household_Income,
+    homeValue: socio.Median_Home_Value,
+    povertyRate: socio.Poverty_Rate,
+  }));
   return lines.join('<br>');
+}
+
+/** properties: an LAPD division's properties; estimate: its row of lapd_area_socioeconomic.json, if any. */
+function areaTooltip(properties, count, estimate) {
+  const lines = [`<b>${properties.area_full_name}</b> · ${properties.bureau} Bureau`, `Offenses: ${formatNumber(count)}`];
+  const rate = perThousand(count, estimate?.population);
+  if (rate !== null) lines.push(`Per 1,000 residents: ${formatRate(rate)}`);
+  if (!estimate) return [...lines, 'No census estimates'].join('<br>');
+  lines.push(`<i>Estimated from ZIPs (${estimate.year}):</i>`, ...censusLines('Population', {
+    population: estimate.population,
+    income: estimate.median_household_income,
+    homeValue: estimate.median_home_value,
+    povertyRate: estimate.poverty_rate,
+  }));
+  return lines.join('<br>');
+}
+
+/** Shades features in quantile classes of valueOf(feature), with a tooltip per feature and the legend. */
+function drawChoropleth(features, valueOf, tooltipOf, measure) {
+  const values = features.map(valueOf);
+  const breaks = quantileBreaks(values, SEQUENTIAL.length);
+  areaLayer = L.geoJSON(features, {
+    style: (feature) => ({ fillColor: colorFor(valueOf(feature), breaks), fillOpacity: 0.75, color: '#ffffff', weight: 1 }),
+    onEachFeature: (feature, layer) => layer.bindTooltip(tooltipOf(feature), { sticky: true }),
+  }).addTo(map);
+  updateLegend(breaks, values, measure);
 }
 
 function drawZipMap(data, city, months, measure) {
   const counts = zipCounts(data, city, months);
-  const valueOf = (zip) => (measure === 'rate' ? perThousand(counts[zip], data.socio[zip]) : counts[zip]);
+  const zipOf = (feature) => feature.properties.ZIP_CODE;
+  const valueOf = (feature) => {
+    const zip = zipOf(feature);
+    return measure === 'rate' ? perThousand(counts[zip], data.socio[zip]?.Total_Population) : counts[zip];
+  };
+  const tooltipOf = (feature) => {
+    const zip = zipOf(feature);
+    return zipTooltip(zip, feature.properties.PO_NAME, counts[zip], data.socio[zip]);
+  };
   // properties.city marks ZIPs overlapping the city's map box; the rest are out-of-area addresses.
   const features = data.zipShapes.features.filter(
-    (feature) => feature.properties.city === city && feature.properties.ZIP_CODE in counts,
+    (feature) => feature.properties.city === city && zipOf(feature) in counts,
   );
-  const values = features.map((feature) => valueOf(feature.properties.ZIP_CODE));
-  const breaks = quantileBreaks(values, SEQUENTIAL.length);
-
-  areaLayer = L.geoJSON(features, {
-    style: (feature) => ({
-      fillColor: colorFor(valueOf(feature.properties.ZIP_CODE), breaks),
-      fillOpacity: 0.75,
-      color: '#ffffff',
-      weight: 1,
-    }),
-    onEachFeature: (feature, layer) => {
-      const zip = feature.properties.ZIP_CODE;
-      layer.bindTooltip(zipTooltip(zip, feature.properties.PO_NAME, counts[zip], data.socio[zip]), { sticky: true });
-    },
-  }).addTo(map);
-  updateLegend(breaks, values, measure);
+  drawChoropleth(features, valueOf, tooltipOf, measure);
 
   if (city === 'SF') {
     districtLayer = L.geoJSON(data.sfDistricts, {
@@ -145,25 +177,24 @@ function drawZipMap(data, city, months, measure) {
   return notes;
 }
 
-function drawAreaMap(data, months) {
+function drawLapdMap(data, months, measure) {
   const counts = areaCounts(data, months);
-  const largest = Math.max(1, ...Object.values(counts));
-  const markers = data.lapdAreas.map((area) => {
-    const count = counts[area.name];
-    // Circle area, not radius, is proportional to the count.
-    const radius = 4 + 26 * Math.sqrt(count / largest);
-    return L.circleMarker([area.lat, area.lon], {
-      radius,
-      color: '#ffffff',
-      weight: 2,
-      fillColor: themeColors().cities.LA,
-      fillOpacity: 0.8,
-    }).bindTooltip(`<b>${area.full_name}</b><br>${area.bureau} Bureau<br>Offenses: ${formatNumber(count)}`);
-  });
-  areaLayer = L.layerGroup(markers).addTo(map);
-  legend.getContainer().innerHTML = '';
-  return ['LAPD reports locations by area only, so each circle sits at an area\'s center.',
-    'Circle size shows the offense count.'];
+  const nameOf = (feature) => feature.properties.area_name;
+  const valueOf = (feature) => {
+    const count = counts[nameOf(feature)];
+    return measure === 'rate' ? perThousand(count, data.areaSocio[nameOf(feature)]?.population) : count;
+  };
+  const tooltipOf = (feature) => areaTooltip(feature.properties, counts[nameOf(feature)], data.areaSocio[nameOf(feature)]);
+  drawChoropleth(data.lapdDivisions.features, valueOf, tooltipOf, measure);
+
+  const notes = [
+    'LAPD reports crime locations by area only, so each of its 21 areas is shaded by the selected measure.',
+    'Hover an area for its offenses and census values.',
+    'An area\'s population, income, home value and poverty rate are estimated from ZIP data:',
+    'each ZIP overlapping the area counts in proportion to the share of the ZIP\'s area inside it, as if residents were spread evenly.',
+  ];
+  if (measure === 'rate') notes.push('Rates use each area\'s estimated population.');
+  return notes;
 }
 
 /** Keeps the city picker in step with the toggled cities; returns the city to show. */
@@ -177,8 +208,7 @@ function syncCityOptions(data) {
 /** Draws the map for the picked city from the shared filters and the map's own measure. */
 export function renderMap(data) {
   const city = syncCityOptions(data);
-  const measure = city === 'LA' ? 'count' : elements.mapMeasure.value;
-  elements.mapMeasureField.hidden = city === 'LA';
+  const measure = elements.mapMeasure.value;
   map.invalidateSize();
   if (city !== shownCity) {
     map.fitBounds(data.cities[city].bounds);
@@ -192,7 +222,7 @@ export function renderMap(data) {
   districtLayer = null;
 
   const months = selectedMonths();
-  const notes = city === 'LA' ? drawAreaMap(data, months) : drawZipMap(data, city, months, measure);
+  const notes = city === 'LA' ? drawLapdMap(data, months, measure) : drawZipMap(data, city, months, measure);
   notes.push(`Map counts use whole months: ${formatMonth(months.start)} – ${formatMonth(months.end)}.`);
   elements.mapTitle.textContent = city === 'LA' ? 'Los Angeles offenses by LAPD area' : `${data.cities[city].name} offenses by ZIP code`;
   elements.mapNote.textContent = notes.join(' ');
