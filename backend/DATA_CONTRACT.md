@@ -2,6 +2,8 @@
 
 This is the reference for building the website on top of the crime database. `crime-pipeline load` writes the database to `backend/data/crime.db`. It is a single SQLite file of about 1.3 GB, rebuilt from scratch on every load.
 
+The static website doesn't open the database. It reads the small files that `crime-pipeline export` writes to `frontend/data/`; see [Web export](#web-export-frontenddata).
+
 **Stability promise:** later pipeline stages may **add** tables and columns. Existing table and column names will not be renamed or removed without updating this file. See the [change log](#change-log) for what changed and when.
 
 ## Connecting from TypeScript
@@ -207,7 +209,32 @@ WHERE city = 'San Francisco' AND crime_category = 'Motor Vehicle Theft'
   AND occurred_date BETWEEN '2025-06-01' AND '2025-06-30' AND latitude IS NOT NULL;
 ```
 
+## Web export: `frontend/data/`
+
+`crime-pipeline export` turns `crime.db` into small static files for the website, which never opens the database. The files are committed to git. Rerun `export` after `load` to refresh them.
+
+Every count covers comparable offenses only: the three [default filters](#default-filters-for-honest-comparisons). Cities are codes: `LA`, `SD`, `SF`. A `null` `zip` or `division` means the offenses have no such geography. Those rows are kept, so each count file adds up to the city's total. JSON files are flat arrays of objects unless noted.
+
+| File | One entry per | Fields |
+|---|---|---|
+| `zip_monthly.json` | city × month × ZIP × crime group | `city`, `month` (`'2025-01'`), `zip`, `group`, `count`. Built from `offenses`, because `daily_counts` has no ZIP. LA rows all have `zip: null`. |
+| `division_monthly.json` | city × month × police division × crime category | `city`, `month`, `division`, `category`, `count`. Built from `daily_counts`. |
+| `crime_categories.json` | shared category | `category`, `group`, `order`, `description` |
+| `lapd_areas.json` | LAPD area | `number`, `name` (matches `division`), `full_name`, `bureau`, `lat`, `lon` |
+| `metadata.json` | (one object) | `exported_at`, `database_built_at`, `pipeline_version`, `shared_window_start`, and `cities`: a list of `city`, `name`, `first_date`, `last_date`, `bounds` (the map box, `[[south, west], [north, east]]`) |
+| `socioeconomic.csv` | ZIP × year | The rows of `backend/data/census/ca_socioeconomic_2018_present.csv` for ZIPs in the SD or SF data: `Year`, `Zip_Code`, `Total_Population`, `Median_Household_Income`, `Median_Home_Value`, `Below_Poverty_Level`, `Poverty_Rate` |
+| `zip_codes.geojson` | ZIP polygon | Features of `backend/data/boundaries/ca/ca_zip_codes.geojson` for ZIPs in the SD or SF data, keyed by `properties.ZIP_CODE`. SF ZIPs missing from that file come from the SF Census ZCTA file. `properties.city` is the city whose map box the polygon overlaps, or `null` for out-of-area ZIPs. |
+| `sfpd_districts.geojson` | SFPD district | `boundaries/sf/sfpd_districts_current.geojson`, unchanged. `properties.district` is upper case; title-case it to match `division`. |
+| `compatibility_report.md` | (report) | Per city: ZIPs and divisions in the data versus the files above, and offenses with no usable geography |
+
+Months are complete except the last one in each city; check `last_date` in `metadata.json`.
+
+`export` exits with code 1 when a San Francisco ZIP or police district in the data has no polygon. San Diego ZIPs without a polygon (PO boxes, out-of-area addresses) are listed in the report but don't fail the step.
+
 ## Change log
+
+**Web export**
+- Added `crime-pipeline export` and the `frontend/data/` bundle. `crime.db` is unchanged.
 
 **1.0.0: repo restructure**
 - The database moved to `backend/data/crime.db`. Its contents are unchanged: tables, columns and values are identical to stage 3.

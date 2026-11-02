@@ -7,9 +7,14 @@ CRIME_DATA_DIR environment variable or the CLI's --data-dir option. Layout:
     raw/sd/pd_nibrs_<year>_datasd.csv               (one per year)
     raw/sf/Police_Department_Incident_Reports*.csv  (newest file is used)
     boundaries/sf/*.geojson                          (from `fetch-boundaries`)
+    boundaries/ca/ca_zip_codes.geojson               (statewide ZIP polygons, in git)
+    census/ca_socioeconomic_2018_present.csv         (ZIP socioeconomic data, in git)
     cleaned/                                         (written by `clean`)
     standardized/                                    (written by `standardize`)
     crime.db                                         (written by `load`)
+
+`export` writes the website's data bundle to frontend/data/ (Paths.export_dir),
+which stays in the repo whatever the data folder is.
 """
 
 import os
@@ -18,11 +23,13 @@ from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_DATA_DIR = BACKEND_DIR / "data"
+DEFAULT_EXPORT_DIR = BACKEND_DIR.parent / "frontend" / "data"
 
 
 @dataclass(frozen=True)
 class Paths:
     data_dir: Path
+    export_dir: Path = DEFAULT_EXPORT_DIR
 
     @property
     def raw_dir(self):
@@ -31,6 +38,14 @@ class Paths:
     @property
     def boundaries_dir(self):
         return self.data_dir / "boundaries"
+
+    @property
+    def ca_zip_boundaries(self):
+        return self.boundaries_dir / "ca" / "ca_zip_codes.geojson"
+
+    @property
+    def census_dir(self):
+        return self.data_dir / "census"
 
     @property
     def cleaned_dir(self):

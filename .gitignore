@@ -4,6 +4,7 @@ backend/data/**
 !backend/data/**/.gitkeep
 !backend/data/README.md
 !backend/data/boundaries/**
+!backend/data/census/**
 
 # ---- Python ----
 __pycache__/

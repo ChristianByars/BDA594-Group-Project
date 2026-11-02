@@ -4,7 +4,7 @@ import argparse
 import sys
 import time
 
-from crime_pipeline import checks, geo, load, standardize
+from crime_pipeline import checks, export, geo, load, standardize
 from crime_pipeline.config import get_paths
 from crime_pipeline.standardize import ALL_CITIES
 
@@ -29,6 +29,10 @@ def cmd_load(paths, args):
     load.run(paths)
 
 
+def cmd_export(paths, args):
+    return 1 if export.run(paths) else 0
+
+
 def cmd_all(paths, args):
     print("== clean")
     standardize.clean(paths)
@@ -40,6 +44,8 @@ def cmd_all(paths, args):
         return 1
     print("\n== load")
     load.run(paths)
+    print("\n== export")
+    return cmd_export(paths, args)
 
 
 def main(argv=None):
@@ -56,7 +62,9 @@ def main(argv=None):
         step.set_defaults(func=func)
     steps.add_parser("check", help="quality checks on standardized/").set_defaults(func=cmd_check)
     steps.add_parser("load", help="standardized/ -> crime.db (SQLite)").set_defaults(func=cmd_load)
-    steps.add_parser("all", help="clean, standardize, check, then load").set_defaults(func=cmd_all)
+    steps.add_parser("export", help="crime.db -> frontend/data/ (web data bundle + compatibility report)") \
+        .set_defaults(func=cmd_export)
+    steps.add_parser("all", help="clean, standardize, check, load, then export").set_defaults(func=cmd_all)
 
     args = parser.parse_args(argv)
     paths = get_paths(args.data_dir)

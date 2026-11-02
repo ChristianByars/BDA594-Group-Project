@@ -1,0 +1,5 @@
+# Build context is the repo root; send only the page, not backend/data (several GB locally).
+*
+!frontend/
+frontend/Dockerfile
+frontend/Dockerfile.dockerignore
