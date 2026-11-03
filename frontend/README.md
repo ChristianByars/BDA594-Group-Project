@@ -30,6 +30,18 @@ python -m http.server 8000      # python3 on macOS if `python` isn't found
 
 Then open <http://localhost:8000>.
 
+## Running the tests
+
+The tests live in `frontend-tests/`, outside this folder so they are never deployed. They load the real `index.html` and modules into [jsdom](https://github.com/jsdom/jsdom) and run on Node's built-in test runner. The page itself needs no Node. Only the tests do.
+
+```bash
+cd frontend-tests
+npm install
+npm test
+```
+
+They cover the pill buttons, the whole filter bar (groups, categories, date presets and typed dates, measure, cities and the Los Angeles note) and the Map's per-100,000 rate. They don't draw charts or the map, so check those in a browser. They were written and run on Node 26.
+
 ## What the page shows
 
 ### Filter bar

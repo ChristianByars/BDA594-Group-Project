@@ -1,0 +1,11 @@
+{
+  "name": "frontend-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --import ./helpers/register-hooks.js --test"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.3"
+  }
+}

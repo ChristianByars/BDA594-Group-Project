@@ -56,7 +56,7 @@ function areaCounts(data, months) {
   return counts;
 }
 
-function perHundredThousand(count, population) {
+export function perHundredThousand(count, population) {
   return population ? (count * PER_RESIDENTS) / population : null;
 }
 
