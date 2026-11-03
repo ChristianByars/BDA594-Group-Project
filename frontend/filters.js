@@ -2,6 +2,7 @@
 
 import { addDays } from './data.js';
 import { formatDate, themeColors } from './display.js';
+import { createPills } from './pills.js';
 
 /**
  * cities: selected city codes, in metadata order
@@ -15,8 +16,8 @@ export const filters = { cities: [], group: '', category: '', start: '', end: ''
 export const UNRELIABLE_LA_GROUPS = ['Society', 'Other'];
 
 const elements = Object.fromEntries([
-  'cityToggles', 'groupSelect', 'categorySelect', 'rangePreset', 'startDate', 'endDate',
-  'measureSelect', 'filterNote',
+  'cityToggles', 'groupPills', 'categoryPills', 'rangePills', 'startDate', 'endDate',
+  'measurePills', 'filterNote',
 ].map((id) => [id, document.getElementById(id)]));
 
 /** The crime group the selection covers, or '' for all groups. */
@@ -50,16 +51,15 @@ function datePresets(first, last) {
   return presets.map((preset) => ({ ...preset, start: preset.start < first ? first : preset.start }));
 }
 
-function fillSelect(select, options) {
-  select.replaceChildren(...options.map(({ value, label }) => new Option(label, value)));
-}
+let groupPills = null;
+let categoryPills = null;
+let rangePills = null;
 
 function fillCategories(data) {
   const shown = data.categories.filter((category) => category.group !== 'Non-Crime'
     && (!filters.group || category.group === filters.group));
-  fillSelect(elements.categorySelect, [{ value: '', label: 'All categories' },
-    ...shown.map((category) => ({ value: category.category, label: category.category }))]);
-  elements.categorySelect.value = filters.category;
+  categoryPills.setOptions([{ value: '', label: 'All' },
+    ...shown.map((category) => ({ value: category.category, label: category.category }))], filters.category);
 }
 
 /** Repaints the city toggle swatches, for example after the theme changes. */
@@ -89,7 +89,7 @@ export function setUpFilterBar(data, onChange) {
   elements.cityToggles.replaceChildren(...cityCodes.map((code) => {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'city-toggle';
+    button.className = 'pill city-toggle';
     button.dataset.city = code;
     button.setAttribute('aria-pressed', 'true');
     button.innerHTML = `<span class="city-swatch"></span>${data.cities[code].name}`;
@@ -97,14 +97,33 @@ export function setUpFilterBar(data, onChange) {
   }));
   paintCityToggles();
 
+  const changed = () => {
+    updateNote(data);
+    onChange();
+  };
+
   const groups = [...new Set(data.categories.map((category) => category.group))].filter((group) => group !== 'Non-Crime');
-  fillSelect(elements.groupSelect, [{ value: '', label: 'All groups' }, ...groups.map((group) => ({ value: group, label: group }))]);
+  groupPills = createPills(elements.groupPills,
+    [{ value: '', label: 'All' }, ...groups.map((group) => ({ value: group, label: group }))], '', (group) => {
+      filters.group = group;
+      if (filters.category && data.groupOf[filters.category] !== group) filters.category = '';
+      fillCategories(data);
+      changed();
+    });
+  categoryPills = createPills(elements.categoryPills, [], '', (category) => {
+    filters.category = category;
+    if (category && !filters.group) {
+      filters.group = data.groupOf[category];
+      groupPills.select(filters.group);
+      fillCategories(data);
+    }
+    changed();
+  });
   fillCategories(data);
 
   const first = data.metadata.cities.map((city) => city.first_date).sort()[0];
   const last = data.metadata.cities.map((city) => city.last_date).sort().at(-1);
   const presets = datePresets(first, last);
-  fillSelect(elements.rangePreset, [...presets, { value: 'custom', label: 'Custom' }]);
   for (const input of [elements.startDate, elements.endDate]) {
     input.min = first;
     input.max = last;
@@ -114,11 +133,10 @@ export function setUpFilterBar(data, onChange) {
     filters.end = elements.endDate.value = preset.end;
   };
   applyPreset(presets[0]);
-
-  const changed = () => {
-    updateNote(data);
-    onChange();
-  };
+  rangePills = createPills(elements.rangePills, presets, presets[0].value, (value) => {
+    applyPreset(presets.find((preset) => preset.value === value));
+    changed();
+  });
 
   elements.cityToggles.addEventListener('click', (event) => {
     const button = event.target.closest('button');
@@ -128,29 +146,6 @@ export function setUpFilterBar(data, onChange) {
     button.setAttribute('aria-pressed', String(!on));
     filters.cities = cityCodes.filter((code) => elements.cityToggles
       .querySelector(`[data-city="${code}"]`).getAttribute('aria-pressed') === 'true');
-    changed();
-  });
-
-  elements.groupSelect.addEventListener('change', () => {
-    filters.group = elements.groupSelect.value;
-    if (filters.category && data.groupOf[filters.category] !== filters.group) filters.category = '';
-    fillCategories(data);
-    changed();
-  });
-
-  elements.categorySelect.addEventListener('change', () => {
-    filters.category = elements.categorySelect.value;
-    if (filters.category && !filters.group) {
-      filters.group = elements.groupSelect.value = data.groupOf[filters.category];
-      fillCategories(data);
-    }
-    changed();
-  });
-
-  elements.rangePreset.addEventListener('change', () => {
-    const preset = presets.find((candidate) => candidate.value === elements.rangePreset.value);
-    if (!preset) return; // 'Custom' keeps the current dates
-    applyPreset(preset);
     changed();
   });
 
@@ -170,13 +165,17 @@ export function setUpFilterBar(data, onChange) {
       }
       filters.start = elements.startDate.value;
       filters.end = elements.endDate.value;
-      elements.rangePreset.value = 'custom';
+      const match = presets.find((preset) => preset.start === filters.start && preset.end === filters.end);
+      rangePills.select(match ? match.value : '');
       changed();
     });
   }
 
-  elements.measureSelect.addEventListener('change', () => {
-    filters.measure = elements.measureSelect.value;
+  createPills(elements.measurePills, [
+    { value: 'count', label: 'Offense count' },
+    { value: 'rate', label: 'Per 100,000 residents' },
+  ], filters.measure, (measure) => {
+    filters.measure = measure;
     changed();
   });
 

@@ -3,6 +3,7 @@
 import { addDays, datesBetween, populationFor } from './data.js';
 import { baseLayout, drawChart, formatDate, themeColors } from './display.js';
 import { categoryMatches, filters } from './filters.js';
+import { createPills } from './pills.js';
 
 const PER_RESIDENTS = 100000;
 const PANEL_GAP = 0.07;
@@ -10,18 +11,22 @@ const TITLE_LINE_CHARS = 34;
 const NARROW = window.matchMedia('(max-width: 800px)');
 
 const elements = Object.fromEntries([
-  'trendControls', 'trendLayout', 'trendGranularity', 'trendRolling', 'trendIndexed', 'trendChart', 'trendNote',
+  'trendLayout', 'trendGranularity', 'trendRolling', 'trendIndexed', 'trendChart', 'trendNote',
 ].map((id) => [id, document.getElementById(id)]));
+
+let layoutPills = null;
+let granularityPills = null;
+let rollingPills = null;
 
 const HOVER_FORMATS = { day: '%a %b %-d, %Y', week: 'Week of %b %-d, %Y', month: '%B %Y' };
 
 function readOptions() {
-  const granularity = elements.trendGranularity.value;
+  const granularity = granularityPills.value;
   return {
-    multiples: elements.trendLayout.value === 'multiples',
+    multiples: layoutPills.value === 'multiples',
     granularity,
-    rolling: granularity === 'day' ? Number(elements.trendRolling.value) : 0,
-    indexed: elements.trendIndexed.checked,
+    rolling: granularity === 'day' ? Number(rollingPills.value) : 0,
+    indexed: elements.trendIndexed.getAttribute('aria-pressed') === 'true',
   };
 }
 
@@ -179,7 +184,7 @@ function notes(data, series, options) {
 /** Draws the Trends chart from the shared filters and this tab's controls. */
 export function renderTrends(data) {
   const options = readOptions();
-  elements.trendRolling.disabled = options.granularity !== 'day';
+  rollingPills.setDisabled(options.granularity !== 'day');
   const theme = themeColors();
   const series = filters.cities.map((code) => ({ code, name: data.cities[code].name, points: citySeries(data, code, options) }));
   const hasData = series.some((city) => city.points.some((point) => point.value !== null));
@@ -264,5 +269,24 @@ export function renderTrends(data) {
 
 /** Re-renders the chart when one of the tab's own controls changes. */
 export function setUpTrends(data) {
-  elements.trendControls.addEventListener('change', () => renderTrends(data));
+  const redraw = () => renderTrends(data);
+  layoutPills = createPills(elements.trendLayout, [
+    { value: 'overlay', label: 'Cities overlaid' },
+    { value: 'multiples', label: 'One panel per city' },
+  ], 'overlay', redraw);
+  granularityPills = createPills(elements.trendGranularity, [
+    { value: 'day', label: 'Day' },
+    { value: 'week', label: 'Week' },
+    { value: 'month', label: 'Month' },
+  ], 'day', redraw);
+  rollingPills = createPills(elements.trendRolling, [
+    { value: '0', label: 'None' },
+    { value: '7', label: '7-day' },
+    { value: '28', label: '28-day' },
+  ], '0', redraw);
+  elements.trendIndexed.addEventListener('click', () => {
+    const on = elements.trendIndexed.getAttribute('aria-pressed') === 'true';
+    elements.trendIndexed.setAttribute('aria-pressed', String(!on));
+    redraw();
+  });
 }
