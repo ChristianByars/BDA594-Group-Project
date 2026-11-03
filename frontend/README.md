@@ -8,6 +8,7 @@ A static web page that compares crime in Los Angeles, San Diego and San Francisc
 | `app.js` | Entry point: loads the data, wires the filter bar, theme toggle and tabs, and renders the active tab |
 | `data.js` | Loads `data/` and builds lookups: city info, category groups, ZIP socioeconomic rows, LAPD area estimates, city populations, cities that record the time of day |
 | `filters.js` | The shared filter bar and the `filters` state object every tab reads |
+| `pills.js` | The single-choice pill buttons used by the filter bar and each tab's controls |
 | `display.js` | City and crime-group colors for light and dark mode, number and date formats, shared Plotly drawing |
 | `trends.js` | Trends tab |
 | `compare.js` | Compare tab |
@@ -36,9 +37,9 @@ Then open <http://localhost:8000>.
 The bar at the top applies to every tab. A change redraws the tab you're on, and other tabs redraw when you open them.
 
 - **Cities:** toggle Los Angeles, San Diego and San Francisco. All three start on, and at least one stays on. Each city keeps one color on every chart: LA blue, SD orange, SF aqua.
-- **Crime group and Category:** a group (Violent, Property, Vehicle, Society, Other, or all) and a shared category within it. Picking a category selects its group.
-- **Dates:** a preset (all data, last 12 months, last 90 days, each calendar year) or explicit **From** and **To** dates. Editing a date switches the preset to Custom.
 - **Measure:** offense count, or offenses per 100,000 residents. Rates divide each day's offenses by the city's Census population for that year (`data/city_population.json`). There is no 2026 estimate yet, so 2026 uses 2025.
+- **Dates:** a preset pill (all data, last 12 months, last 90 days, each calendar year) or explicit **From** and **To** dates. Editing a date clears the preset pill, unless the dates match one.
+- **Crime group and Category:** click a group pill (Violent, Property, Vehicle, Society, Other, or All). The category pills list every category, or only the selected group's. Picking a category selects its group.
 - A yellow note appears when LA is selected with the Society or Other group. LA's data only includes offenses with a victim, so those numbers undercount.
 
 The header shows the selection and its total offenses.
@@ -68,7 +69,7 @@ LA's Society and Other numbers are flagged wherever they appear. Its striped bar
 
 One city at a time. **City** lists the toggled cities and starts on the first one. The map uses the shared crime group and date filters, rounded out to whole months, because the map files are monthly.
 
-- **Map shows** switches between the offense count and offenses per 1,000 residents, for every city. Colors use quantile classes, so each shade covers about the same number of ZIPs or areas, and the legend lists each class's range.
+- **Map shows** switches between the offense count and offenses per 100,000 residents, for every city. Colors use quantile classes, so each shade covers about the same number of ZIPs or areas, and the legend lists each class's range.
 - **San Diego and San Francisco:** a ZIP map. Hover a ZIP to see its offenses and its population, median household income, median home value and poverty rate. ZIP counts are kept by crime group only, so picking a category shows its whole group on the ZIP map.
 - **Los Angeles:** LAPD publishes locations by area only, so the map shades LAPD's 21 areas. Area counts are kept by category, so the shading follows the category filter. Hover an area to see its bureau, offenses, rate and census values. The census values are labelled "Estimated from ZIPs". The export estimates them by overlaying the ZIP polygons on each area: a ZIP counts in proportion to the share of its area inside the LAPD area, as if its residents were spread evenly. Rates use the estimated area population. Downtown's Central area has few residents, so its rate is far above the others.
 - **San Francisco districts:** dashed outlines show the current SFPD districts.
@@ -138,7 +139,7 @@ One-time setup, by a repo admin:
 
 3. Click **Next → Insert**. If the page is cut off, drag the embed box's handles until the map and chart both fit.
 
-Below 800 px wide the filter bar wraps to two fields per row, the tabs stretch to the full width, and the Trends chart drops its line-end labels in favor of the legend, so the page also works in a narrow embed. Below 1100 px the Compare tab's day-of-week and hour-of-day panels stack instead of sitting side by side. The Compare tab is taller than the embed, so the embed scrolls.
+Below 800 px wide each filter's label sits above its pills, the tabs stretch to the full width, and the Trends chart drops its line-end labels in favor of the legend, so the page also works in a narrow embed. Below 1100 px the Compare tab's day-of-week and hour-of-day panels stack instead of sitting side by side. The Compare tab is taller than the embed, so the embed scrolls.
 
 ### Docker
 

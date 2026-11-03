@@ -22,37 +22,38 @@
     </section>
 
     <section class="filter-bar" aria-label="Filters">
-      <div class="filter-field">
-        <span class="field-label">Cities</span>
-        <div id="cityToggles" class="city-toggles"></div>
+      <div class="filter-row">
+        <div class="filter-field">
+          <span class="field-label" id="citiesLabel">Cities</span>
+          <div id="cityToggles" class="pill-group" role="group" aria-labelledby="citiesLabel"></div>
+        </div>
+        <div class="filter-field">
+          <span class="field-label" id="measureLabel">Measure</span>
+          <div id="measurePills" class="pill-group segmented" role="group" aria-labelledby="measureLabel"></div>
+        </div>
       </div>
-      <label class="filter-field">
-        Crime group
-        <select id="groupSelect"></select>
-      </label>
-      <label class="filter-field wide">
-        Category
-        <select id="categorySelect"></select>
-      </label>
-      <label class="filter-field">
-        Dates
-        <select id="rangePreset"></select>
-      </label>
-      <label class="filter-field">
-        From
-        <input id="startDate" type="date">
-      </label>
-      <label class="filter-field">
-        To
-        <input id="endDate" type="date">
-      </label>
-      <label class="filter-field wide">
-        Measure
-        <select id="measureSelect">
-          <option value="count">Offense count</option>
-          <option value="rate">Per 100,000 residents</option>
-        </select>
-      </label>
+      <div class="filter-row">
+        <div class="filter-field">
+          <span class="field-label" id="datesLabel">Dates</span>
+          <div id="rangePills" class="pill-group" role="group" aria-labelledby="datesLabel"></div>
+        </div>
+        <div class="filter-field date-range">
+          <label>From <input id="startDate" type="date"></label>
+          <label>To <input id="endDate" type="date"></label>
+        </div>
+      </div>
+      <div class="filter-row">
+        <div class="filter-field">
+          <span class="field-label" id="groupLabel">Crime group</span>
+          <div id="groupPills" class="pill-group" role="group" aria-labelledby="groupLabel"></div>
+        </div>
+      </div>
+      <div class="filter-row">
+        <div class="filter-field">
+          <span class="field-label" id="categoryLabel">Category</span>
+          <div id="categoryPills" class="pill-group" role="group" aria-labelledby="categoryLabel"></div>
+        </div>
+      </div>
       <p id="filterNote" class="filter-note" hidden></p>
     </section>
 
@@ -64,35 +65,21 @@
 
     <section id="trendsPanel" class="section-card tab-panel" role="tabpanel" aria-label="Trends">
       <h2>Offenses over time</h2>
-      <form id="trendControls" class="explorer-controls">
-        <label>
-          Layout
-          <select id="trendLayout">
-            <option value="overlay">Cities overlaid</option>
-            <option value="multiples">One panel per city</option>
-          </select>
-        </label>
-        <label>
-          Period
-          <select id="trendGranularity">
-            <option value="day">Day</option>
-            <option value="week">Week</option>
-            <option value="month">Month</option>
-          </select>
-        </label>
-        <label>
-          Rolling average
-          <select id="trendRolling">
-            <option value="0">None</option>
-            <option value="7">7-day</option>
-            <option value="28">28-day</option>
-          </select>
-        </label>
-        <label class="check-field">
-          <input id="trendIndexed" type="checkbox">
-          Index to 100 at the start
-        </label>
-      </form>
+      <div class="panel-controls">
+        <div class="filter-field">
+          <span class="field-label" id="trendLayoutLabel">Layout</span>
+          <div id="trendLayout" class="pill-group" role="group" aria-labelledby="trendLayoutLabel"></div>
+        </div>
+        <div class="filter-field">
+          <span class="field-label" id="trendGranularityLabel">Period</span>
+          <div id="trendGranularity" class="pill-group" role="group" aria-labelledby="trendGranularityLabel"></div>
+        </div>
+        <div class="filter-field">
+          <span class="field-label" id="trendRollingLabel">Rolling average</span>
+          <div id="trendRolling" class="pill-group" role="group" aria-labelledby="trendRollingLabel"></div>
+        </div>
+        <button id="trendIndexed" class="pill" type="button" aria-pressed="false">Index to 100 at the start</button>
+      </div>
       <div id="trendChart" class="chart"></div>
       <p id="trendNote" class="subtle chart-note"></p>
     </section>
@@ -125,19 +112,16 @@
 
     <section id="mapPanel" class="section-card tab-panel" role="tabpanel" aria-label="Map" hidden>
       <h2 id="mapTitle">Map</h2>
-      <form id="mapControls" class="explorer-controls">
-        <label>
-          City
-          <select id="mapCity"></select>
-        </label>
-        <label>
-          Map shows
-          <select id="mapMeasure">
-            <option value="count">Offense count</option>
-            <option value="rate">Offenses per 1,000 residents</option>
-          </select>
-        </label>
-      </form>
+      <div class="panel-controls">
+        <div class="filter-field">
+          <span class="field-label" id="mapCityLabel">City</span>
+          <div id="mapCity" class="pill-group" role="group" aria-labelledby="mapCityLabel"></div>
+        </div>
+        <div class="filter-field">
+          <span class="field-label" id="mapMeasureLabel">Map shows</span>
+          <div id="mapMeasure" class="pill-group segmented" role="group" aria-labelledby="mapMeasureLabel"></div>
+        </div>
+      </div>
       <div id="mapNote" class="subtle"></div>
       <div id="mapChart" class="chart map-chart"></div>
     </section>

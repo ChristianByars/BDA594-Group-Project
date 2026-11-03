@@ -4,14 +4,19 @@ import * as L from 'https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js';
 
 import { THEMES, currentTheme, formatMonth, formatNumber, formatRate, themeColors } from './display.js';
 import { categoryMatches, filters, groupMatches, selectedGroup } from './filters.js';
+import { createPills } from './pills.js';
 
 // Sequential blue ramp, light (few offenses) to dark (many).
 const SEQUENTIAL = ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b'];
 const NO_DATA_COLOR = '#d1d5db';
+const PER_RESIDENTS = 100000;
 
 const elements = Object.fromEntries([
-  'mapControls', 'mapCity', 'mapMeasure', 'mapTitle', 'mapNote', 'mapChart',
+  'mapCity', 'mapMeasure', 'mapTitle', 'mapNote', 'mapChart',
 ].map((id) => [id, document.getElementById(id)]));
+
+let cityPills = null;
+let measurePills = null;
 
 let map = null;
 let tileLayer = null;
@@ -51,8 +56,8 @@ function areaCounts(data, months) {
   return counts;
 }
 
-function perThousand(count, population) {
-  return population ? (count * 1000) / population : null;
+function perHundredThousand(count, population) {
+  return population ? (count * PER_RESIDENTS) / population : null;
 }
 
 /** Quantile class breaks: up to classes - 1 distinct lower bounds. */
@@ -88,7 +93,7 @@ function updateLegend(breaks, values, measure) {
   if (known.length < values.length) {
     items.push(`<div><span class="legend-swatch" style="background:${NO_DATA_COLOR}"></span>No residents or no population data</div>`);
   }
-  const title = measure === 'rate' ? 'Offenses per 1,000 residents' : 'Offenses';
+  const title = measure === 'rate' ? 'Offenses per 100,000 residents' : 'Offenses';
   legend.getContainer().innerHTML = known.length ? `<strong>${title}</strong>${items.join('')}` : '';
 }
 
@@ -106,8 +111,8 @@ function censusLines(populationLabel, { population, income, homeValue, povertyRa
 
 function zipTooltip(zip, placeName, count, socio) {
   const lines = [`<b>ZIP ${zip}</b>${placeName ? ` · ${placeName}` : ''}`, `Offenses: ${formatNumber(count)}`];
-  const rate = perThousand(count, socio?.Total_Population);
-  if (rate !== null) lines.push(`Per 1,000 residents: ${formatRate(rate)}`);
+  const rate = perHundredThousand(count, socio?.Total_Population);
+  if (rate !== null) lines.push(`Per 100,000 residents: ${formatRate(rate)}`);
   if (!socio) return [...lines, 'No socioeconomic data'].join('<br>');
   lines.push(...censusLines(`Population (${socio.Year})`, {
     population: socio.Total_Population,
@@ -121,8 +126,8 @@ function zipTooltip(zip, placeName, count, socio) {
 /** properties: an LAPD division's properties; estimate: its row of lapd_area_socioeconomic.json, if any. */
 function areaTooltip(properties, count, estimate) {
   const lines = [`<b>${properties.area_full_name}</b> · ${properties.bureau} Bureau`, `Offenses: ${formatNumber(count)}`];
-  const rate = perThousand(count, estimate?.population);
-  if (rate !== null) lines.push(`Per 1,000 residents: ${formatRate(rate)}`);
+  const rate = perHundredThousand(count, estimate?.population);
+  if (rate !== null) lines.push(`Per 100,000 residents: ${formatRate(rate)}`);
   if (!estimate) return [...lines, 'No census estimates'].join('<br>');
   lines.push(`<i>Estimated from ZIPs (${estimate.year}):</i>`, ...censusLines('Population', {
     population: estimate.population,
@@ -149,7 +154,7 @@ function drawZipMap(data, city, months, measure) {
   const zipOf = (feature) => feature.properties.ZIP_CODE;
   const valueOf = (feature) => {
     const zip = zipOf(feature);
-    return measure === 'rate' ? perThousand(counts[zip], data.socio[zip]?.Total_Population) : counts[zip];
+    return measure === 'rate' ? perHundredThousand(counts[zip], data.socio[zip]?.Total_Population) : counts[zip];
   };
   const tooltipOf = (feature) => {
     const zip = zipOf(feature);
@@ -182,7 +187,7 @@ function drawLapdMap(data, months, measure) {
   const nameOf = (feature) => feature.properties.area_name;
   const valueOf = (feature) => {
     const count = counts[nameOf(feature)];
-    return measure === 'rate' ? perThousand(count, data.areaSocio[nameOf(feature)]?.population) : count;
+    return measure === 'rate' ? perHundredThousand(count, data.areaSocio[nameOf(feature)]?.population) : count;
   };
   const tooltipOf = (feature) => areaTooltip(feature.properties, counts[nameOf(feature)], data.areaSocio[nameOf(feature)]);
   drawChoropleth(data.lapdDivisions.features, valueOf, tooltipOf, measure);
@@ -199,16 +204,16 @@ function drawLapdMap(data, months, measure) {
 
 /** Keeps the city picker in step with the toggled cities; returns the city to show. */
 function syncCityOptions(data) {
-  const current = elements.mapCity.value;
-  elements.mapCity.replaceChildren(...filters.cities.map((code) => new Option(data.cities[code].name, code)));
-  elements.mapCity.value = filters.cities.includes(current) ? current : filters.cities[0];
-  return elements.mapCity.value;
+  const current = cityPills.value;
+  cityPills.setOptions(filters.cities.map((code) => ({ value: code, label: data.cities[code].name })),
+    filters.cities.includes(current) ? current : filters.cities[0]);
+  return cityPills.value;
 }
 
 /** Draws the map for the picked city from the shared filters and the map's own measure. */
 export function renderMap(data) {
   const city = syncCityOptions(data);
-  const measure = elements.mapMeasure.value;
+  const measure = measurePills.value;
   map.invalidateSize();
   if (city !== shownCity) {
     map.fitBounds(data.cities[city].bounds);
@@ -246,5 +251,10 @@ export function setUpMap(data) {
   legend = L.control({ position: 'bottomright' });
   legend.onAdd = () => L.DomUtil.create('div', 'map-legend');
   legend.addTo(map);
-  elements.mapControls.addEventListener('change', () => renderMap(data));
+  const redraw = () => renderMap(data);
+  cityPills = createPills(elements.mapCity, [], '', redraw);
+  measurePills = createPills(elements.mapMeasure, [
+    { value: 'count', label: 'Offense count' },
+    { value: 'rate', label: 'Offenses per 100,000 residents' },
+  ], 'count', redraw);
 }
