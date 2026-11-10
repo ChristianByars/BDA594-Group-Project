@@ -1,6 +1,7 @@
 // Page entry point: loads the data, wires the filter bar, theme toggle and tabs, and renders the active tab.
 
 import { renderCompare } from './compare.js';
+import { renderCorrelation } from './correlation.js';
 import { loadData } from './data.js';
 import { currentTheme, formatNumber } from './display.js';
 import { categoryMatches, describeSelection, filters, paintCityToggles, setUpFilterBar } from './filters.js';
@@ -14,6 +15,7 @@ const elements = Object.fromEntries([
 const RENDERERS = {
   trends: renderTrends,
   compare: renderCompare,
+  correlation: renderCorrelation,
   map: renderMap,
 };
 

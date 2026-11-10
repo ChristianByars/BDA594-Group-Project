@@ -60,6 +60,7 @@
     <div id="tabBar" class="dashboard-tabs tab-bar" role="tablist" aria-label="Dashboards">
       <button class="dashboard-tab active" type="button" role="tab" data-tab="trends" aria-selected="true" aria-controls="trendsPanel">Trends</button>
       <button class="dashboard-tab" type="button" role="tab" data-tab="compare" aria-selected="false" aria-controls="comparePanel">Compare</button>
+      <button class="dashboard-tab" type="button" role="tab" data-tab="correlation" aria-selected="false" aria-controls="correlationPanel">Correlation</button>
       <button class="dashboard-tab" type="button" role="tab" data-tab="map" aria-selected="false" aria-controls="mapPanel">Map</button>
     </div>
 
@@ -108,6 +109,11 @@
           <p id="compareHoursNote" class="subtle chart-note"></p>
         </div>
       </div>
+    </section>
+
+    <section id="correlationPanel" class="section-card tab-panel" role="tabpanel" aria-label="Correlation" hidden>
+      <h2>Correlation</h2>
+      <p class="subtle">How socioeconomic factors relate to reported crime. Coming soon.</p>
     </section>
 
     <section id="mapPanel" class="section-card tab-panel" role="tabpanel" aria-label="Map" hidden>

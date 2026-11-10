@@ -12,6 +12,7 @@ A static web page that compares crime in Los Angeles, San Diego and San Francisc
 | `display.js` | City and crime-group colors for light and dark mode, number and date formats, shared Plotly drawing |
 | `trends.js` | Trends tab |
 | `compare.js` | Compare tab |
+| `correlation.js` | Correlation tab (placeholder for now) |
 | `map.js` | Map tab |
 | `styles.css` | Page styles, including dark mode and the narrow layout |
 | `data/` | Small pre-aggregated files written by `crime-pipeline export` (committed to git) |
@@ -76,6 +77,10 @@ Four panels that show how the selected cities differ. Hover any bar or point for
 - **Hour of day:** one line per city across the 24 hours, as an average per day. Only LA and SF are shown: San Diego's data has no time of day, and the panel says so when SD is selected. The hourly file isn't split by date or category, so this panel covers every date from the shared start date and the whole selected crime group. It follows the cities, the group and the measure. Rates use each city's newest population estimate. LA's peaks at midnight and noon likely include reports with an unknown time.
 
 LA's Society and Other numbers are flagged wherever they appear. Its striped bars and segments, and its dotted hour line when one of those groups is selected, mark numbers that undercount, because LA only records offenses with a victim.
+
+### Correlation tab
+
+Compares socioeconomic factors with reported crime. The tab and its panel are in place, but they show only a "coming soon" message so far.
 
 ### Map tab
 
