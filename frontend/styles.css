@@ -524,6 +524,12 @@ button.pill.city-toggle[aria-pressed="false"] {
   }
 }
 
+.correlation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 24px;
+}
+
 :root[data-theme="dark"] .filter-bar {
   background: #111827;
   border-color: #374151;

@@ -12,7 +12,7 @@ A static web page that compares crime in Los Angeles, San Diego and San Francisc
 | `display.js` | City and crime-group colors for light and dark mode, number and date formats, shared Plotly drawing |
 | `trends.js` | Trends tab |
 | `compare.js` | Compare tab |
-| `correlation.js` | Correlation tab (placeholder for now) |
+| `correlation.js` | Correlation tab |
 | `map.js` | Map tab |
 | `styles.css` | Page styles, including dark mode and the narrow layout |
 | `data/` | Small pre-aggregated files written by `crime-pipeline export` (committed to git) |
@@ -80,7 +80,9 @@ LA's Society and Other numbers are flagged wherever they appear. Its striped bar
 
 ### Correlation tab
 
-Compares socioeconomic factors with reported crime. The tab and its panel are in place, but they show only a "coming soon" message so far.
+One scatterplot per selected city: offenses per 100,000 residents on the y-axis and one socioeconomic factor on the x-axis. A pill switches the factor between poverty rate, median household income and median home price (the Census median home value). Each chart has a dashed least-squares trend line, and its heading shows the Spearman rank correlation (ρ) and the number of points. A Linear/Log pill sets the vertical scale. Linear is the default, and its axis runs from a little below zero to a little above the highest point, so markers near either edge aren't cut off. Log spreads out the low rates when a few downtown ZIPs have rates many times the rest. Places with no offenses can't be drawn on a log axis, but they still count in ρ (which is the same on either scale), and on the log scale the trend line is fitted to the log of the rate so it stays straight. The tab follows the shared city, date and crime group filters. It ignores the Measure filter, because the y-axis is always a rate, so changing that toggle leaves these charts untouched.
+
+SD and SF plot one point per ZIP code inside the city's map area. LA plots one point per LAPD area, using the census estimates in `lapd_area_socioeconomic.json`. Places with under 1,000 residents, or without a value for the chosen factor, are left off, and each chart's note says how many. Each chart has its own vertical scale. As on the map, offenses are counted in whole months, and ZIP counts are kept by crime group, so picking a single category still shows the whole group for SD and SF.
 
 ### Map tab
 

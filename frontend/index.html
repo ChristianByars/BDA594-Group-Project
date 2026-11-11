@@ -113,7 +113,19 @@
 
     <section id="correlationPanel" class="section-card tab-panel" role="tabpanel" aria-label="Correlation" hidden>
       <h2>Correlation</h2>
-      <p class="subtle">How socioeconomic factors relate to reported crime. Coming soon.</p>
+      <p class="subtle">Reported crime per 100,000 residents against a socioeconomic factor, one chart per city, with a trend line and Spearman's rank correlation. Hover a point for its values.</p>
+      <div class="panel-controls">
+        <div class="filter-field">
+          <span class="field-label" id="correlationFactorLabel">Socioeconomic factor</span>
+          <div id="correlationFactor" class="pill-group segmented" role="group" aria-labelledby="correlationFactorLabel"></div>
+        </div>
+        <div class="filter-field">
+          <span class="field-label" id="correlationScaleLabel">Vertical scale</span>
+          <div id="correlationScale" class="pill-group segmented" role="group" aria-labelledby="correlationScaleLabel"></div>
+        </div>
+      </div>
+      <p id="correlationNote" class="subtle chart-note"></p>
+      <div id="correlationCharts" class="correlation-grid"></div>
     </section>
 
     <section id="mapPanel" class="section-card tab-panel" role="tabpanel" aria-label="Map" hidden>
