@@ -61,6 +61,7 @@
       <button class="dashboard-tab active" type="button" role="tab" data-tab="trends" aria-selected="true" aria-controls="trendsPanel">Trends</button>
       <button class="dashboard-tab" type="button" role="tab" data-tab="compare" aria-selected="false" aria-controls="comparePanel">Compare</button>
       <button class="dashboard-tab" type="button" role="tab" data-tab="map" aria-selected="false" aria-controls="mapPanel">Map</button>
+      <button class="dashboard-tab" type="button" role="tab" data-tab="statistics" aria-selected="false" aria-controls="statisticsPanel">Statistics</button>
     </div>
 
     <section id="trendsPanel" class="section-card tab-panel" role="tabpanel" aria-label="Trends">
@@ -124,6 +125,75 @@
       </div>
       <div id="mapNote" class="subtle"></div>
       <div id="mapChart" class="chart map-chart"></div>
+    </section>
+
+    <section id="statisticsPanel" class="section-card tab-panel" role="tabpanel" aria-label="Statistics" hidden>
+      <h2>Descriptive Statistics &amp; Distribution</h2>
+      <p class="subtle">Summary metrics, daily dispersion box plots, concentration curves, and raw offense records.</p>
+
+      <!-- KPI Summary Cards -->
+      <div id="statsKpiGrid" class="stats-kpi-grid"></div>
+
+      <!-- Charts Row -->
+      <div class="compare-grid" style="margin-top: 24px;">
+        <div>
+          <h3>Daily offense distribution</h3>
+          <p class="subtle">Box-and-whisker plot of daily offense volumes (showing median, quartiles, and outliers).</p>
+          <div id="statsBoxChart" class="chart"></div>
+        </div>
+        <div>
+          <h3>Cumulative concentration (Lorenz curve)</h3>
+          <p class="subtle">Gini inequality and share of total offenses concentrated across days.</p>
+          <div id="statsLorenzChart" class="chart"></div>
+        </div>
+      </div>
+
+      <!-- Threshold Query Card -->
+      <div class="stats-threshold-card" style="margin-top: 24px;">
+        <h3>Threshold query</h3>
+        <p class="subtle">Calculate how frequently daily offenses exceed a given volume threshold.</p>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px;">
+          <label for="statsThresholdInput" style="font-weight: 500; font-size: 13px;">Exceedance threshold (offenses/day):</label>
+          <input type="number" id="statsThresholdInput" class="pill" style="width: 140px; padding: 6px 12px; border: 1px solid var(--grid, #e5e7eb); border-radius: 9999px; background: transparent; color: inherit;" placeholder="e.g. 100" min="0" step="5">
+          <span id="statsThresholdOutput" class="subtle" style="font-weight: 500; font-size: 13px;">Enter a threshold to view exceedance probability.</span>
+        </div>
+      </div>
+
+      <!-- Sortable Data Table -->
+      <div style="margin-top: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <h3>Filtered offense records</h3>
+            <p class="subtle" id="statsTableCount">Showing daily aggregated records</p>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <input type="search" id="statsTableSearch" placeholder="Search category, city, date..." class="pill" style="padding: 6px 14px; border: 1px solid var(--grid, #e5e7eb); border-radius: 9999px; background: transparent; color: inherit;">
+            <button id="statsExportCsv" class="pill secondary" type="button" style="cursor: pointer;">&darr; Download CSV</button>
+          </div>
+        </div>
+        <div class="stats-table-wrap">
+          <table id="statsDataTable" class="stats-table">
+            <thead>
+              <tr>
+                <th data-col="date" style="cursor: pointer;">Date &#x21C5;</th>
+                <th data-col="city" style="cursor: pointer;">City &#x21C5;</th>
+                <th data-col="group" style="cursor: pointer;">Crime Group &#x21C5;</th>
+                <th data-col="category" style="cursor: pointer;">Category &#x21C5;</th>
+                <th data-col="count" style="cursor: pointer; text-align: right;">Count &#x21C5;</th>
+                <th data-col="rate" style="cursor: pointer; text-align: right;">Rate / 100k &#x21C5;</th>
+              </tr>
+            </thead>
+            <tbody id="statsTableBody"></tbody>
+          </table>
+        </div>
+        <div id="statsTablePagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+          <span id="statsPageInfo" class="subtle">Page 1 of 1</span>
+          <div style="display: flex; gap: 8px;">
+            <button id="statsPrevPage" class="pill secondary" type="button">Previous</button>
+            <button id="statsNextPage" class="pill secondary" type="button">Next</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div id="status" class="status">Loading data…</div>

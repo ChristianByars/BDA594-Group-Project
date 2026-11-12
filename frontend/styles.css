@@ -613,3 +613,131 @@ button.pill.city-toggle[aria-pressed="false"] {
     font-size: 22px;
   }
 }
+
+
+/* Statistics tab styles */
+.stats-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.stats-kpi-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--grid, #e5e7eb);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme="dark"] .stats-kpi-card {
+  background: #111827;
+  border-color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.stats-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.stats-kpi-city-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.stats-kpi-stat {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stats-kpi-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: #6b7280;
+}
+
+:root[data-theme="dark"] .stats-kpi-rows {
+  color: #9ca3af;
+}
+
+.stats-kpi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stats-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--grid, #e5e7eb);
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+:root[data-theme="dark"] .stats-table-wrap {
+  border-color: #374151;
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.stats-table th,
+.stats-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--grid, #e5e7eb);
+}
+
+:root[data-theme="dark"] .stats-table th,
+:root[data-theme="dark"] .stats-table td {
+  border-bottom-color: #374151;
+}
+
+.stats-table th {
+  background: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+  color: var(--text, #374151);
+  user-select: none;
+}
+
+:root[data-theme="dark"] .stats-table th {
+  background: rgba(255, 255, 255, 0.02);
+  color: #e5e7eb;
+}
+
+.stats-table tr:hover td {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+:root[data-theme="dark"] .stats-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.stats-threshold-card {
+  background: rgba(0, 0, 0, 0.015);
+  border: 1px solid var(--grid, #e5e7eb);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+:root[data-theme="dark"] .stats-threshold-card {
+  background: rgba(255, 255, 255, 0.015);
+  border-color: #374151;
+}
