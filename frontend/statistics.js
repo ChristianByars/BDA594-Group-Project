@@ -1,7 +1,7 @@
 // Statistics tab: Descriptive metrics, distribution box plots, Lorenz inequality curves,
 // interactive threshold queries, and sortable/searchable raw offense data table with CSV export.
 
-import { populationFor } from './data.js';
+import { datesBetween, populationFor } from './data.js';
 import { baseLayout, currentTheme, drawChart, formatDate, formatNumber, themeColors } from './display.js';
 import { categoryMatches, filters } from './filters.js';
 
@@ -149,6 +149,17 @@ function getElements() {
    Data Processing for Current Active Filters
    --------------------------------------------------------------------- */
 
+const maxDate = (a, b) => (a > b ? a : b);
+const minDate = (a, b) => (a < b ? a : b);
+
+/** Adds a 0 for every date from start to end that has no entry: the export omits days with no offenses. */
+export function fillZeroDays(totalsByDate, start, end) {
+  for (const date of datesBetween(start, end)) {
+    if (!totalsByDate.has(date)) totalsByDate.set(date, 0);
+  }
+  return totalsByDate;
+}
+
 function getFilteredData(data) {
   const rows = [];
   const dailyTotalsByCity = {};
@@ -174,6 +185,11 @@ function getFilteredData(data) {
     const cityMap = dailyTotalsByCity[row.city];
     const cur = cityMap.get(row.date) || 0;
     cityMap.set(row.date, cur + (filters.measure === 'rate' ? rate : row.count));
+  }
+
+  for (const cityCode of filters.cities) {
+    const coverage = data.cities[cityCode];
+    if (coverage) fillZeroDays(dailyTotalsByCity[cityCode], maxDate(filters.start, coverage.first_date), minDate(filters.end, coverage.last_date));
   }
 
   return { rows, dailyTotalsByCity };
@@ -218,7 +234,7 @@ function renderKpiCards(data, dailyTotalsByCity) {
             ${cityName} (${cityCode})
           </span>
         </div>
-        <div class="stats-kpi-rows">No offenses match the current filters.</div>
+        <div class="stats-kpi-rows">No data for this city in the selected dates.</div>
       </div>
     `;
     }
@@ -230,7 +246,7 @@ function renderKpiCards(data, dailyTotalsByCity) {
             <span class="stats-kpi-city-dot" style="background: ${cityColor};"></span>
             ${cityName} (${cityCode})
           </span>
-          <span style="font-size: 11px; font-weight: 500; opacity: 0.8;">${formatNumber(stats.n)} active days</span>
+          <span style="font-size: 11px; font-weight: 500; opacity: 0.8;">${formatNumber(stats.n)} days</span>
         </div>
         <div class="stats-kpi-stat" style="color: ${cityColor};">
           ${formatNumber(Math.round(stats.sum))} <span style="font-size: 13px; font-weight: 500; color: inherit;">total ${unitLabel}</span>
@@ -253,8 +269,8 @@ function renderKpiCards(data, dailyTotalsByCity) {
             <strong>${stats.q1.toFixed(1)} – ${stats.q3.toFixed(1)}</strong>
           </div>
           <div class="stats-kpi-row">
-            <span>Peak Day (${formatDate(peakDate)}):</span>
-            <strong style="color: #ef4444;">${peakVal.toFixed(1)} ${unitLabel}</strong>
+            <span>Peak Day${peakVal > 0 ? ` (${formatDate(peakDate)})` : ''}:</span>
+            <strong style="color: #ef4444;">${peakVal > 0 ? `${peakVal.toFixed(1)} ${unitLabel}` : '—'}</strong>
           </div>
           <div class="stats-kpi-row">
             <span>Inequality (Gini coeff):</span>
