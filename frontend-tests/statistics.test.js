@@ -140,4 +140,40 @@ describe('Statistics tab', () => {
     await render({ category: 'Homicide' });
     assert.equal(document.querySelectorAll('#statsTableBody tr').length, 1);
   });
+
+  describe('threshold query', () => {
+    function setThreshold(value) {
+      const input = document.getElementById('statsThresholdInput');
+      input.value = value;
+      input.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+      return document.getElementById('statsThresholdOutput').textContent;
+    }
+
+    it('counts days that meet the threshold, zero days included', async () => {
+      await render({ category: 'Homicide' });
+      const text = setThreshold('4');
+      assert.match(text, /Los Angeles: 1 of 4 days \(25\.0%\) met or exceeded 4, holding 100\.0% of total offenses/);
+      assert.match(text, /San Diego: 0 of 2 days \(0\.0%\) met or exceeded 4, holding 0\.0%/);
+    });
+
+    it('names the unit of the current measure', async () => {
+      await render({});
+      assert.equal(document.getElementById('statsThresholdLabel').textContent, 'Threshold (offenses per day):');
+      await render({ measure: 'rate' });
+      assert.equal(
+        document.getElementById('statsThresholdLabel').textContent,
+        'Threshold (offenses per 100,000 residents per day):',
+      );
+    });
+
+    it('says so when a city has no data in the selected dates', async () => {
+      await render({ start: '2025-01-03', end: '2025-01-04' });
+      assert.match(setThreshold('1'), /San Diego: no data in the selected dates/);
+    });
+
+    it('rejects a negative threshold', async () => {
+      await render({});
+      assert.equal(setThreshold('-1'), 'Please enter a valid non-negative number.');
+    });
+  });
 });

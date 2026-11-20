@@ -138,7 +138,7 @@ function getElements() {
   if (elements.statsKpiGrid) return elements;
   Object.assign(elements, Object.fromEntries([
     'statsKpiGrid', 'statsBoxChart', 'statsLorenzChart',
-    'statsThresholdInput', 'statsThresholdOutput',
+    'statsThresholdInput', 'statsThresholdOutput', 'statsThresholdLabel',
     'statsTableSearch', 'statsExportCsv', 'statsDataTable', 'statsTableBody',
     'statsTableCount', 'statsPageInfo', 'statsPrevPage', 'statsNextPage',
   ].map((id) => [id, document.getElementById(id)])));
@@ -392,8 +392,13 @@ function renderCharts(data, dailyTotalsByCity) {
    --------------------------------------------------------------------- */
 
 function updateThresholdQuery() {
-  const { statsThresholdInput, statsThresholdOutput } = getElements();
+  const { statsThresholdInput, statsThresholdOutput, statsThresholdLabel } = getElements();
   if (!statsThresholdInput || !statsThresholdOutput || !cachedData) return;
+
+  if (statsThresholdLabel) {
+    const unit = filters.measure === 'rate' ? 'offenses per 100,000 residents per day' : 'offenses per day';
+    statsThresholdLabel.textContent = `Threshold (${unit}):`;
+  }
 
   const rawVal = statsThresholdInput.value.trim();
   if (!rawVal) {
@@ -422,7 +427,9 @@ function updateThresholdQuery() {
     const pctDays = totalDays ? (countAbove / totalDays) * 100 : 0;
     const pctVol = totalVol ? (volAbove / totalVol) * 100 : 0;
 
-    reports.push(`<strong>${cityName}</strong>: ${countAbove} of ${totalDays} days (${pctDays.toFixed(1)}%) exceeded ${threshold}, holding ${pctVol.toFixed(1)}% of total offenses.`);
+    reports.push(totalDays
+      ? `<strong>${cityName}</strong>: ${countAbove} of ${totalDays} days (${pctDays.toFixed(1)}%) met or exceeded ${threshold}, holding ${pctVol.toFixed(1)}% of total offenses.`
+      : `<strong>${cityName}</strong>: no data in the selected dates.`);
   }
 
   statsThresholdOutput.innerHTML = reports.join('<br>') || 'No days matched the selection.';
