@@ -740,4 +740,5 @@ button.pill.city-toggle[aria-pressed="false"] {
 :root[data-theme="dark"] .stats-threshold-card {
   background: rgba(255, 255, 255, 0.015);
   border-color: #374151;
-}
+}
+
