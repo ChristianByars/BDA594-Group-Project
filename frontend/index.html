@@ -135,7 +135,7 @@
       <div id="statsKpiGrid" class="stats-kpi-grid"></div>
 
       <!-- Charts Row -->
-      <div class="compare-grid" style="margin-top: 24px;">
+      <div class="compare-grid stats-block">
         <div>
           <h3>Daily offense distribution</h3>
           <p class="subtle">Box-and-whisker plot of daily offense volumes (showing median, quartiles, and outliers).</p>
@@ -149,46 +149,46 @@
       </div>
 
       <!-- Threshold Query Card -->
-      <div class="stats-threshold-card" style="margin-top: 24px;">
+      <div class="stats-threshold-card stats-block">
         <h3>Threshold query</h3>
         <p class="subtle">Calculate how frequently daily offenses exceed a given volume threshold.</p>
-        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px;">
-          <label id="statsThresholdLabel" for="statsThresholdInput" style="font-weight: 500; font-size: 13px;">Threshold (offenses per day):</label>
-          <input type="number" id="statsThresholdInput" class="pill" style="width: 140px; padding: 6px 12px; border: 1px solid var(--grid, #e5e7eb); border-radius: 9999px; background: transparent; color: inherit;" placeholder="e.g. 100" min="0" step="5">
-          <span id="statsThresholdOutput" class="subtle" style="font-weight: 500; font-size: 13px;">Enter a threshold to view exceedance probability.</span>
+        <div class="stats-threshold-row">
+          <label id="statsThresholdLabel" class="stats-threshold-text" for="statsThresholdInput">Threshold (offenses per day):</label>
+          <input type="number" id="statsThresholdInput" class="stats-input stats-input-number" placeholder="e.g. 100" min="0" step="5">
+          <span id="statsThresholdOutput" class="subtle stats-threshold-text">Enter a threshold to view exceedance probability.</span>
         </div>
       </div>
 
       <!-- Sortable Data Table -->
-      <div style="margin-top: 32px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+      <div class="stats-records">
+        <div class="stats-records-head">
           <div>
             <h3>Filtered offense records</h3>
             <p class="subtle" id="statsTableCount">Showing daily aggregated records</p>
           </div>
-          <div style="display: flex; gap: 12px; align-items: center;">
-            <input type="search" id="statsTableSearch" placeholder="Search category, city, date..." class="pill" style="padding: 6px 14px; border: 1px solid var(--grid, #e5e7eb); border-radius: 9999px; background: transparent; color: inherit;">
-            <button id="statsExportCsv" class="pill secondary" type="button" style="cursor: pointer;">&darr; Download CSV</button>
+          <div class="stats-records-tools">
+            <input type="search" id="statsTableSearch" placeholder="Search category, city, date..." class="stats-input">
+            <button id="statsExportCsv" class="pill secondary" type="button">&darr; Download CSV</button>
           </div>
         </div>
         <div class="stats-table-wrap">
           <table id="statsDataTable" class="stats-table">
             <thead>
               <tr>
-                <th data-col="date" style="cursor: pointer;">Date &#x21C5;</th>
-                <th data-col="city" style="cursor: pointer;">City &#x21C5;</th>
-                <th data-col="group" style="cursor: pointer;">Crime Group &#x21C5;</th>
-                <th data-col="category" style="cursor: pointer;">Category &#x21C5;</th>
-                <th data-col="count" style="cursor: pointer; text-align: right;">Count &#x21C5;</th>
-                <th data-col="rate" style="cursor: pointer; text-align: right;">Rate / 100k &#x21C5;</th>
+                <th data-col="date">Date &#x21C5;</th>
+                <th data-col="city">City &#x21C5;</th>
+                <th data-col="group">Crime Group &#x21C5;</th>
+                <th data-col="category">Category &#x21C5;</th>
+                <th data-col="count" class="stats-num">Count &#x21C5;</th>
+                <th data-col="rate" class="stats-num">Rate / 100k &#x21C5;</th>
               </tr>
             </thead>
             <tbody id="statsTableBody"></tbody>
           </table>
         </div>
-        <div id="statsTablePagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+        <div id="statsTablePagination" class="stats-pagination">
           <span id="statsPageInfo" class="subtle">Page 1 of 1</span>
-          <div style="display: flex; gap: 8px;">
+          <div class="stats-pager">
             <button id="statsPrevPage" class="pill secondary" type="button">Previous</button>
             <button id="statsNextPage" class="pill secondary" type="button">Next</button>
           </div>

@@ -141,6 +141,12 @@ describe('Statistics tab', () => {
     assert.match(la.textContent, /Daily Mean:\s*1\.0 offenses\/day/);
   });
 
+  it('gives each city card its city colour', async () => {
+    const [la, sd] = await render({});
+    assert.equal(la.style.getPropertyValue('--city'), '#2a78d6');
+    assert.equal(sd.style.getPropertyValue('--city'), '#eb6834');
+  });
+
   it('keeps a city that has no matching offenses and shows its zeros', async () => {
     const [, sd] = await render({ category: 'Homicide' });
     assert.match(sd.textContent, /2 days/);

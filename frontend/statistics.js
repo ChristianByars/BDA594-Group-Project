@@ -237,10 +237,10 @@ function renderKpiCards(data, dailyTotalsByCity) {
 
     if (!stats.n) {
       return `
-      <div class="stats-kpi-card" style="border-top: 3px solid ${cityColor};">
+      <div class="stats-kpi-card" style="--city: ${cityColor};">
         <div class="stats-kpi-header">
           <span>
-            <span class="stats-kpi-city-dot" style="background: ${cityColor};"></span>
+            <span class="stats-kpi-city-dot"></span>
             ${escapeHtml(cityName)} (${escapeHtml(cityCode)})
           </span>
         </div>
@@ -250,16 +250,16 @@ function renderKpiCards(data, dailyTotalsByCity) {
     }
 
     return `
-      <div class="stats-kpi-card" style="border-top: 3px solid ${cityColor};">
+      <div class="stats-kpi-card" style="--city: ${cityColor};">
         <div class="stats-kpi-header">
           <span>
-            <span class="stats-kpi-city-dot" style="background: ${cityColor};"></span>
+            <span class="stats-kpi-city-dot"></span>
             ${escapeHtml(cityName)} (${escapeHtml(cityCode)})
           </span>
-          <span style="font-size: 11px; font-weight: 500; opacity: 0.8;">${formatNumber(stats.n)} days</span>
+          <span class="stats-kpi-days">${formatNumber(stats.n)} days</span>
         </div>
-        <div class="stats-kpi-stat" style="color: ${cityColor};">
-          ${formatNumber(Math.round(stats.sum))} <span style="font-size: 13px; font-weight: 500; color: inherit;">total ${unitLabel}</span>
+        <div class="stats-kpi-stat">
+          ${formatNumber(Math.round(stats.sum))} <span class="stats-kpi-unit">total ${unitLabel}</span>
         </div>
         <div class="stats-kpi-rows">
           <div class="stats-kpi-row">
@@ -280,7 +280,7 @@ function renderKpiCards(data, dailyTotalsByCity) {
           </div>
           <div class="stats-kpi-row">
             <span>Peak Day${peakVal > 0 ? ` (${formatDate(peakDate)})` : ''}:</span>
-            <strong style="color: #ef4444;">${peakVal > 0 ? `${peakVal.toFixed(1)} ${unitLabel}` : '—'}</strong>
+            <strong class="stats-kpi-peak">${peakVal > 0 ? `${peakVal.toFixed(1)} ${unitLabel}` : '—'}</strong>
           </div>
           <div class="stats-kpi-row">
             <span>Inequality (Gini coeff):</span>
@@ -506,18 +506,18 @@ function renderTable() {
   if (statsNextPage) statsNextPage.disabled = tablePage >= maxPage;
 
   if (!pageRows.length) {
-    statsTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #9ca3af; padding: 24px;">No records match your filters and search.</td></tr>';
+    statsTableBody.innerHTML = '<tr><td colspan="6" class="stats-empty">No records match your filters and search.</td></tr>';
     return;
   }
 
   statsTableBody.innerHTML = pageRows.map((r) => `
     <tr>
       <td>${escapeHtml(r.date)}</td>
-      <td><strong>${escapeHtml(r.cityName)}</strong> <span style="font-size: 11px; opacity: 0.7;">(${escapeHtml(r.city)})</span></td>
-      <td><span class="pill" style="font-size: 11px; padding: 2px 8px;">${escapeHtml(r.group)}</span></td>
+      <td><strong>${escapeHtml(r.cityName)}</strong> <span class="stats-city-code">(${escapeHtml(r.city)})</span></td>
+      <td><span class="stats-group-tag">${escapeHtml(r.group)}</span></td>
       <td>${escapeHtml(r.category)}</td>
-      <td style="text-align: right; font-weight: 600;">${formatNumber(r.count)}</td>
-      <td style="text-align: right;">${r.rate.toFixed(1)}</td>
+      <td class="stats-num stats-count">${formatNumber(r.count)}</td>
+      <td class="stats-num">${r.rate.toFixed(1)}</td>
     </tr>
   `).join('');
 }
