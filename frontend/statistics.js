@@ -87,7 +87,12 @@ export function describe(rawValues) {
   const values = finiteNumbers(rawValues);
   const sorted = [...values].sort((a, b) => a - b);
   const count = sorted.length;
-  if (!count) return { n: 0, sum: 0, mean: 0, median: 0, sd: 0, min: 0, max: 0, iqr: 0, skew: 0 };
+  if (!count) {
+    return {
+      n: 0, sum: 0, mean: 0, median: 0, sd: 0, cv: 0, skew: 0, min: 0, max: 0,
+      q1: 0, q3: 0, iqr: 0, p90: 0, p95: 0,
+    };
+  }
 
   const total = sumOf(sorted);
   const average = total / count;
@@ -203,6 +208,20 @@ function renderKpiCards(data, dailyTotalsByCity) {
     }
 
     const gini = giniCoefficient(values);
+
+    if (!stats.n) {
+      return `
+      <div class="stats-kpi-card" style="border-top: 3px solid ${cityColor};">
+        <div class="stats-kpi-header">
+          <span>
+            <span class="stats-kpi-city-dot" style="background: ${cityColor};"></span>
+            ${cityName} (${cityCode})
+          </span>
+        </div>
+        <div class="stats-kpi-rows">No offenses match the current filters.</div>
+      </div>
+    `;
+    }
 
     return `
       <div class="stats-kpi-card" style="border-top: 3px solid ${cityColor};">
