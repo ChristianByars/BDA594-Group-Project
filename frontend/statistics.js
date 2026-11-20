@@ -106,6 +106,13 @@ export function describe(rawValues) {
   };
 }
 
+/** One decimal, or two (three under 0.01) for a value under 1 so a small rate does not print as 0.0. */
+export function formatStat(value) {
+  const size = Math.abs(value);
+  const digits = size === 0 || size >= 1 ? 1 : size < 0.01 ? 3 : 2;
+  return value.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
 /** Text safe to put inside innerHTML. */
 export function escapeHtml(text) {
   return String(text)
@@ -244,28 +251,28 @@ function renderKpiCards(data, dailyTotalsByCity) {
           <span class="stats-kpi-days">${formatNumber(stats.n)} days</span>
         </div>
         <div class="stats-kpi-stat">
-          ${formatNumber(Math.round(stats.sum))} <span class="stats-kpi-unit">total ${unitLabel}</span>
+          ${filters.measure === 'rate' ? formatStat(stats.sum) : formatNumber(Math.round(stats.sum))} <span class="stats-kpi-unit">total ${unitLabel}</span>
         </div>
         <div class="stats-kpi-rows">
           <div class="stats-kpi-row">
             <span>Daily Mean:</span>
-            <strong>${stats.mean.toFixed(1)} ${unitLabel}/day</strong>
+            <strong>${formatStat(stats.mean)} ${unitLabel}/day</strong>
           </div>
           <div class="stats-kpi-row">
             <span>Daily Median:</span>
-            <strong>${stats.median.toFixed(1)} ${unitLabel}/day</strong>
+            <strong>${formatStat(stats.median)} ${unitLabel}/day</strong>
           </div>
           <div class="stats-kpi-row">
             <span>Std Dev / Spread:</span>
-            <strong>±${stats.sd.toFixed(1)} (CV: ${(stats.cv * 100).toFixed(0)}%)</strong>
+            <strong>±${formatStat(stats.sd)} (CV: ${(stats.cv * 100).toFixed(0)}%)</strong>
           </div>
           <div class="stats-kpi-row">
             <span>Interquartile Range (IQR):</span>
-            <strong>${stats.q1.toFixed(1)} – ${stats.q3.toFixed(1)}</strong>
+            <strong>${formatStat(stats.q1)} – ${formatStat(stats.q3)}</strong>
           </div>
           <div class="stats-kpi-row">
             <span>Peak Day${peakVal > 0 ? ` (${formatDate(peakDate)})` : ''}:</span>
-            <strong class="stats-kpi-peak">${peakVal > 0 ? `${peakVal.toFixed(1)} ${unitLabel}` : '—'}</strong>
+            <strong class="stats-kpi-peak">${peakVal > 0 ? `${formatStat(peakVal)} ${unitLabel}` : '—'}</strong>
           </div>
           <div class="stats-kpi-row">
             <span>Inequality (Gini coeff):</span>
@@ -502,7 +509,7 @@ function renderTable() {
       <td><span class="stats-group-tag">${escapeHtml(r.group)}</span></td>
       <td>${escapeHtml(r.category)}</td>
       <td class="stats-num stats-count">${formatNumber(r.count)}</td>
-      <td class="stats-num">${r.rate.toFixed(1)}</td>
+      <td class="stats-num">${formatStat(r.rate)}</td>
     </tr>
   `).join('');
 }

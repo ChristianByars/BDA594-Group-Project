@@ -72,6 +72,21 @@ describe('lorenzPoints', () => {
   });
 });
 
+describe('formatStat', () => {
+  it('keeps one decimal at 1 and above, and for zero', () => {
+    assert.equal(stats.formatStat(0), '0.0');
+    assert.equal(stats.formatStat(1), '1.0');
+    assert.equal(stats.formatStat(14.04), '14.0');
+    assert.equal(stats.formatStat(8804.06), '8,804.1');
+  });
+
+  it('uses more decimals below 1 so a small rate is not 0.0', () => {
+    assert.equal(stats.formatStat(0.022), '0.02');
+    assert.equal(stats.formatStat(0.5), '0.50');
+    assert.equal(stats.formatStat(0.0092), '0.009');
+  });
+});
+
 describe('escapeHtml', () => {
   it('escapes the characters that can open a tag or attribute', () => {
     assert.equal(stats.escapeHtml('<img src=x onerror="a()">&\''), '&lt;img src=x onerror=&quot;a()&quot;&gt;&amp;&#39;');
@@ -179,6 +194,42 @@ describe('Statistics tab', () => {
   it('still fills the records table when a city has no matching offenses', async () => {
     await render({ category: 'Homicide' });
     assert.equal(document.querySelectorAll('#statsTableBody tr').length, 1);
+  });
+
+  describe('small rates', () => {
+    const RARE = {
+      ...DATA,
+      populations: { LA: { 2025: 10000000 }, SD: { 2025: 10000000 } },
+      dailyCounts: [{ city: 'LA', date: '2025-01-01', category: 'Homicide', count: 4 }],
+    };
+
+    async function renderRare() {
+      ({ document } = loadPage());
+      globalThis.Plotly = { react() {} };
+      ({ filters } = await import(pathToFileURL(join(FRONTEND, 'filters.js')).href));
+      Object.assign(filters, { cities: ['LA'], group: '', category: '', start: '2025-01-01', end: '2025-01-04', measure: 'rate' });
+      const page = await importFrontend('statistics.js');
+      page.setUpStatistics(RARE);
+      page.renderStatistics(RARE);
+      return document.querySelector('.stats-kpi-card').textContent.replace(/\s+/g, ' ');
+    }
+
+    it('shows a rate under 1 with two decimals instead of 0.0', async () => {
+      const card = await renderRare();
+      assert.match(card, /Daily Mean: 0\.01 \/ 100k\/day/);
+      assert.match(card, /Peak Day \(Jan 1, 2025\): 0\.04 \/ 100k/);
+      assert.match(card, /0\.04 total \/ 100k/);
+    });
+
+    it('shows the records table rate with two decimals', async () => {
+      await renderRare();
+      assert.match(document.querySelector('#statsTableBody tr').lastElementChild.textContent, /^0\.04$/);
+    });
+
+    it('lets the threshold take decimals', async () => {
+      await renderRare();
+      assert.equal(document.getElementById('statsThresholdInput').getAttribute('step'), 'any');
+    });
   });
 
   describe('threshold query', () => {
