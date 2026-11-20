@@ -263,13 +263,16 @@ button.secondary { background: #fff; color: #374151; border-color: #d1d5db; }
 }
 
 .map-legend {
-  padding: 8px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
+  background: #f3f4f6;
   color: #111827;
   font-size: 12px;
   line-height: 1.6;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .map-legend:empty {
@@ -277,8 +280,7 @@ button.secondary { background: #fff; color: #374151; border-color: #d1d5db; }
 }
 
 .map-legend strong {
-  display: block;
-  margin-bottom: 4px;
+  flex-basis: 100%;
 }
 
 .legend-swatch {
@@ -288,11 +290,64 @@ button.secondary { background: #fff; color: #374151; border-color: #d1d5db; }
   margin-right: 6px;
   border-radius: 3px;
   vertical-align: -2px;
+  background: var(--swatch);
+}
+
+.legend-swatch.no-data {
+  background: #d1d5db;
 }
 
 :root[data-theme="dark"] .map-legend {
-  background: rgba(17, 24, 39, 0.92);
+  background: #1f2937;
   color: #e5e7eb;
+}
+
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cities, 1), minmax(0, 1fr));
+  column-gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .map-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Each panel spans three shared rows (title, note, map), so the maps line up whatever the note length. */
+.map-city {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  row-gap: 6px;
+  margin-bottom: 16px;
+  min-width: 0;
+}
+
+.map-city[hidden] {
+  display: none;
+}
+
+.map-city-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.map-city-note {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.45;
+}
+
+:root[data-theme="dark"] .map-city-title {
+  color: #d1d5db;
+}
+
+:root[data-theme="dark"] .map-city-note {
+  color: #9ca3af;
 }
 
 /* Crime dashboard: header, shared filter bar, tabs */
