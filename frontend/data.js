@@ -3,6 +3,9 @@
 const DATA_DIR = 'data/';
 const DAY_MS = 86400000;
 
+/** Rates are offenses per this many residents. */
+export const PER_RESIDENTS = 100000;
+
 async function fetchData(name) {
   const response = await fetch(DATA_DIR + name);
   if (!response.ok) throw new Error(`${name}: HTTP ${response.status}`);

@@ -2,6 +2,7 @@
 
 import * as L from 'https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js';
 
+import { PER_RESIDENTS } from './data.js';
 import { THEMES, currentTheme, formatMonth, formatNumber, formatRate, themeColors } from './display.js';
 import { categoryMatches, filters, groupMatches, selectedGroup } from './filters.js';
 import { createPills } from './pills.js';
@@ -9,7 +10,6 @@ import { createPills } from './pills.js';
 // Sequential blue ramp, light (few offenses) to dark (many).
 const SEQUENTIAL = ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b'];
 const NO_DATA_COLOR = '#d1d5db';
-const PER_RESIDENTS = 100000;
 
 const elements = Object.fromEntries([
   'mapCity', 'mapMeasure', 'mapTitle', 'mapNote', 'mapChart',

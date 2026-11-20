@@ -1,11 +1,10 @@
 // Statistics tab: Descriptive metrics, distribution box plots, Lorenz inequality curves,
 // interactive threshold queries, and sortable/searchable raw offense data table with CSV export.
 
-import { datesBetween, populationFor } from './data.js';
+import { PER_RESIDENTS, datesBetween, populationFor } from './data.js';
 import { baseLayout, currentTheme, drawChart, formatDate, formatNumber, themeColors } from './display.js';
 import { categoryMatches, filters } from './filters.js';
 
-const PER_RESIDENTS = 100000;
 const PAGE_SIZE = 25;
 
 /* ---------------------------------------------------------------------

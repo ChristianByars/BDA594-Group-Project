@@ -1,10 +1,9 @@
 // Compare tab: how the cities differ by category, crime-group mix, day of week and hour of day.
 
-import { datesBetween, populationFor } from './data.js';
+import { PER_RESIDENTS, datesBetween, populationFor } from './data.js';
 import { baseLayout, drawChart, formatDate, themeColors } from './display.js';
 import { UNRELIABLE_LA_GROUPS, categoryMatches, filters, groupMatches, selectedGroup } from './filters.js';
 
-const PER_RESIDENTS = 100000;
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const HOUR_LABELS = HOURS.map((hour) => `${hour % 12 || 12} ${hour < 12 ? 'am' : 'pm'}`);
