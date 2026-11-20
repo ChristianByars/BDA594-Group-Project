@@ -9,25 +9,15 @@ const PER_RESIDENTS = 100000;
 const PAGE_SIZE = 25;
 
 /* ---------------------------------------------------------------------
-   Pure Statistical Calculation Helpers (ported from stats-explorer.js)
+   Pure statistics helpers
    --------------------------------------------------------------------- */
 
-export const finiteNumbers = (values) =>
+const finiteNumbers = (values) =>
   values.filter((v) => typeof v === 'number' && Number.isFinite(v));
 
-export const sumOf = (values) => values.reduce((total, v) => total + v, 0);
+const sumOf = (values) => values.reduce((total, v) => total + v, 0);
 
-export function extent(values) {
-  let low = Infinity;
-  let high = -Infinity;
-  for (const v of values) {
-    if (v < low) low = v;
-    if (v > high) high = v;
-  }
-  return [low, high];
-}
-
-export function quantileSorted(sorted, q) {
+function quantileSorted(sorted, q) {
   if (!sorted.length) return NaN;
   const position = (sorted.length - 1) * q;
   const base = Math.floor(position);
@@ -35,10 +25,6 @@ export function quantileSorted(sorted, q) {
   return sorted[base + 1] === undefined
     ? sorted[base]
     : sorted[base] + remainder * (sorted[base + 1] - sorted[base]);
-}
-
-export function medianOf(values) {
-  return quantileSorted([...values].sort((a, b) => a - b), 0.5);
 }
 
 export function giniCoefficient(values) {
@@ -72,7 +58,7 @@ export function lorenzPoints(values, maxPoints = 150) {
   return { x, y };
 }
 
-export function skewness(values) {
+function skewness(values) {
   const count = values.length;
   if (count < 3) return NaN;
   const average = sumOf(values) / count;
