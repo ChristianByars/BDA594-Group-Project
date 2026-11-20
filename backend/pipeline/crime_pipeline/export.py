@@ -3,7 +3,7 @@
 `crime-pipeline export` reads crime.db, the ZIP files and the SF and LA boundary files in
 the data folder, and writes small pre-aggregated files to Paths.export_dir (frontend/data/):
 
-    zip_monthly.json          offenses per city, month, ZIP and crime group
+    zip_monthly.json          offenses per city, month, ZIP and crime category
     division_monthly.json     offenses per city, month, police division and crime category
     daily_counts.json         offenses per city, day and crime category
     hourly_counts.json        offenses per city, hour of day and crime group (LA and SF; SD has no time)
@@ -69,11 +69,11 @@ DEFAULT_FILTERS = """
 
 # daily_counts has no zip column, so ZIP counts come from offenses with the same filters.
 ZIP_MONTHLY = f"""
-SELECT city, substr(occurred_date, 1, 7) AS month, zip, crime_group AS "group", COUNT(*) AS count
+SELECT city, substr(occurred_date, 1, 7) AS month, zip, crime_category AS category, COUNT(*) AS count
 FROM offenses
 WHERE {DEFAULT_FILTERS}
-GROUP BY city, month, zip, crime_group
-ORDER BY city, month, zip, crime_group
+GROUP BY city, month, zip, crime_category
+ORDER BY city, month, zip, crime_category
 """
 
 DIVISION_MONTHLY = f"""

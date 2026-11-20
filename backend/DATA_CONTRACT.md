@@ -219,7 +219,7 @@ Every count covers comparable offenses only: the three [default filters](#defaul
 
 | File | One entry per | Fields |
 |---|---|---|
-| `zip_monthly.json` | city × month × ZIP × crime group | `city`, `month` (`'2025-01'`), `zip`, `group`, `count`. Built from `offenses`, because `daily_counts` has no ZIP. LA rows all have `zip: null`. |
+| `zip_monthly.json` | city × month × ZIP × crime category | `city`, `month` (`'2025-01'`), `zip`, `category`, `count`. Built from `offenses`, because `daily_counts` has no ZIP. LA rows all have `zip: null`. |
 | `division_monthly.json` | city × month × police division × crime category | `city`, `month`, `division`, `category`, `count`. Built from `daily_counts`. |
 | `daily_counts.json` | city × day × crime category | `city`, `date` (`'2025-01-01'`), `category`, `count`. Built from `daily_counts`. Per city it adds up to the same total as `zip_monthly.json`. Days with no offenses in a category have no row. |
 | `hourly_counts.json` | city × hour of day × crime group | `city`, `hour` (integer, 0–23, Pacific), `group`, `count`. Built from `offenses`. LA and SF only: SD has no time of day, and offenses without a time are left out. |
@@ -241,6 +241,9 @@ Months are complete except the last one in each city; check `last_date` in `meta
 `export` exits with code 1 when a San Francisco ZIP or police district, or an LAPD area, in the data has no polygon, or when an LAPD area has no estimated population. San Diego ZIPs without a polygon (PO boxes, out-of-area addresses) are listed in the report but don't fail the step.
 
 ## Change log
+
+**Web export: ZIP rows by category**
+- `zip_monthly.json` rows are now by category instead of group; the `group` field is gone. Look up a row's group from `crime_categories.json`. `crime.db` is unchanged.
 
 **Web export: LAPD area polygons and estimates**
 - Added `lapd_divisions.geojson` and `lapd_area_socioeconomic.json` to the `frontend/data/` bundle, from the new `backend/data/boundaries/la/lapd_divisions.geojson` (written by `crime-pipeline fetch-boundaries`). `crime.db` is unchanged.

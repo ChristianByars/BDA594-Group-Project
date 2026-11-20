@@ -59,12 +59,12 @@ def collection(features):
 def test_monthly_counts_apply_the_default_filters(tmp_path):
     db = build_database(tmp_path / "crime.db")
     assert export.query(db, export.ZIP_MONTHLY) == [
-        {"city": "LA", "month": "2025-01", "zip": None, "group": "Violent", "count": 1},
-        {"city": "SD", "month": "2025-01", "zip": "92101", "group": "Violent", "count": 2},
-        {"city": "SD", "month": "2025-02", "zip": "92101", "group": "Property", "count": 1},
-        {"city": "SF", "month": "2025-01", "zip": None, "group": "Property", "count": 1},
-        {"city": "SF", "month": "2025-01", "zip": "94110", "group": "Property", "count": 1},
-        {"city": "SF", "month": "2025-01", "zip": "94188", "group": "Property", "count": 1},
+        {"city": "LA", "month": "2025-01", "zip": None, "category": "Robbery", "count": 1},
+        {"city": "SD", "month": "2025-01", "zip": "92101", "category": "Robbery", "count": 2},
+        {"city": "SD", "month": "2025-02", "zip": "92101", "category": "Burglary", "count": 1},
+        {"city": "SF", "month": "2025-01", "zip": None, "category": "Theft", "count": 1},
+        {"city": "SF", "month": "2025-01", "zip": "94110", "category": "Theft", "count": 1},
+        {"city": "SF", "month": "2025-01", "zip": "94188", "category": "Theft", "count": 1},
     ]
     assert export.query(db, export.DIVISION_MONTHLY) == [
         {"city": "LA", "month": "2025-01", "division": "Central", "category": "Robbery", "count": 1},
@@ -72,6 +72,25 @@ def test_monthly_counts_apply_the_default_filters(tmp_path):
         {"city": "SD", "month": "2025-02", "division": "Central", "category": "Burglary", "count": 1},
         {"city": "SF", "month": "2025-01", "division": None, "category": "Theft", "count": 1},
         {"city": "SF", "month": "2025-01", "division": "Mission", "category": "Theft", "count": 2},
+    ]
+
+
+def test_monthly_counts_split_by_category_within_the_same_group(tmp_path):
+    db = build_database(tmp_path / "crime.db")
+    # Two categories, same group, same ZIP and month: expect two rows, not one.
+    db.executemany("""INSERT INTO offenses (city, county, county_fips, source_row_id, case_id, occurred_date,
+                      occurred_time, crime_category, crime_group, police_division, zip, is_crime,
+                      possible_duplicate)
+                      VALUES (?, 'County', '06000', ?, ?, '2025-03-01', NULL, ?, 'Violent', 'Central', '92101',
+                      1, 0)""", [
+        ("San Diego", "10", "10", "Robbery"),
+        ("San Diego", "11", "11", "Aggravated Assault"),
+    ])
+    db.commit()
+    rows = [row for row in export.query(db, export.ZIP_MONTHLY) if row["month"] == "2025-03"]
+    assert rows == [
+        {"city": "SD", "month": "2025-03", "zip": "92101", "category": "Aggravated Assault", "count": 1},
+        {"city": "SD", "month": "2025-03", "zip": "92101", "category": "Robbery", "count": 1},
     ]
 
 
