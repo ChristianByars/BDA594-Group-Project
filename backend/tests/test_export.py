@@ -170,6 +170,14 @@ def test_committed_daily_counts_match_the_zip_totals():
     assert totals["daily_counts.json"] == totals["zip_monthly.json"]
 
 
+def test_committed_zip_rows_are_by_known_category():
+    bundle = Path(__file__).resolve().parents[2] / "frontend" / "data"
+    known = {row["category"] for row in json.loads((bundle / "crime_categories.json").read_text())}
+    rows = json.loads((bundle / "zip_monthly.json").read_text())
+    assert all(set(row) == {"city", "month", "zip", "category", "count"} for row in rows)
+    assert {row["category"] for row in rows} <= known
+
+
 def test_compatibility_fails_only_for_unmatched_sf_geography():
     geography = [
         {"city": "SD", "zip": "92101", "division": "Central", "count": 5},
