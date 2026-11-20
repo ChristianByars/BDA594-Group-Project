@@ -13,6 +13,7 @@ A static web page that compares crime in Los Angeles, San Diego and San Francisc
 | `trends.js` | Trends tab |
 | `compare.js` | Compare tab |
 | `map.js` | Map tab |
+| `statistics.js` | Statistics tab |
 | `styles.css` | Page styles, including dark mode and the narrow layout |
 | `data/` | Small pre-aggregated files written by `crime-pipeline export` (committed to git) |
 | `Dockerfile`, `Dockerfile.dockerignore` | nginx image that serves this folder (see [Deploying](#deploying)) |
@@ -40,7 +41,7 @@ npm install
 npm test
 ```
 
-They cover the pill buttons, the whole filter bar (groups, categories, date presets and typed dates, measure, cities and the Los Angeles note) and the Map's per-100,000 rate. They don't draw charts or the map, so check those in a browser. They were written and run on Node 26.
+They cover the pill buttons, the whole filter bar (groups, categories, date presets and typed dates, measure, cities and the Los Angeles note) the Map's per-100,000 rate, and the Statistics tab (its summary maths, KPI cards, threshold query and records table). They don't draw charts or the map, so check those in a browser. They were written and run on Node 26.
 
 ## What the page shows
 
@@ -85,6 +86,16 @@ One city at a time. **City** lists the toggled cities and starts on the first on
 - **San Diego and San Francisco:** a ZIP map. Hover a ZIP to see its offenses and its population, median household income, median home value and poverty rate. ZIP counts are kept by crime group only, so picking a category shows its whole group on the ZIP map.
 - **Los Angeles:** LAPD publishes locations by area only, so the map shades LAPD's 21 areas. Area counts are kept by category, so the shading follows the category filter. Hover an area to see its bureau, offenses, rate and census values. The census values are labelled "Estimated from ZIPs". The export estimates them by overlaying the ZIP polygons on each area: a ZIP counts in proportion to the share of its area inside the LAPD area, as if its residents were spread evenly. Rates use the estimated area population. Downtown's Central area has few residents, so its rate is far above the others.
 - **San Francisco districts:** dashed outlines show the current SFPD districts.
+
+### Statistics tab
+
+Summary statistics for the selected cities' daily offense totals. It follows every filter. In rate mode each day is offenses per 100,000 residents.
+
+- **City cards:** one per city with the total, daily mean and median, standard deviation and coefficient of variation, the quartiles, the peak day and the Gini coefficient. Every day inside the city's data counts, including days with no offenses, which the export leaves out. Days after a city's last date are not counted, and a city with no data in the range says so.
+- **Daily offense distribution:** a box plot per city of those daily totals. Points beyond the whiskers are outliers.
+- **Cumulative concentration (Lorenz curve):** days ranked from quietest to busiest against their running share of offenses. The further a curve bows below the dashed line, the more a few days hold the offenses. The legend gives each city's Gini coefficient (0 is every day equal).
+- **Threshold query:** type a daily total to see, for each city, how many days met or exceeded it and what share of all offenses those days hold. The unit follows the measure.
+- **Filtered offense records:** one row per date, city and category. Sort by clicking a column heading, search by date, city, group or category, and page through 25 rows at a time. **Download CSV** saves every row that matches the filters and the search, in the current sort order.
 
 ### Things to know on every tab
 

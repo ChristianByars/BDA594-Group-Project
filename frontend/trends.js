@@ -1,11 +1,10 @@
 // Trends tab: offenses over time with the selected cities overlaid or in small multiples.
 
-import { addDays, datesBetween, populationFor } from './data.js';
+import { PER_RESIDENTS, addDays, datesBetween, populationFor } from './data.js';
 import { baseLayout, drawChart, formatDate, themeColors } from './display.js';
 import { categoryMatches, filters } from './filters.js';
 import { createPills } from './pills.js';
 
-const PER_RESIDENTS = 100000;
 const PANEL_GAP = 0.07;
 const TITLE_LINE_CHARS = 34;
 const NARROW = window.matchMedia('(max-width: 800px)');

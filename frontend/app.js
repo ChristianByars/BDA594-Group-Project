@@ -6,6 +6,7 @@ import { currentTheme, formatNumber } from './display.js';
 import { categoryMatches, describeSelection, filters, paintCityToggles, setUpFilterBar } from './filters.js';
 import { renderMap, resizeMap, setMapTheme, setUpMap } from './map.js';
 import { renderTrends, setUpTrends } from './trends.js';
+import { renderStatistics, setUpStatistics } from './statistics.js';
 
 const elements = Object.fromEntries([
   'themeToggle', 'themeToggleText', 'status', 'dashboardMeta', 'tabBar',
@@ -15,6 +16,7 @@ const RENDERERS = {
   trends: renderTrends,
   compare: renderCompare,
   map: renderMap,
+  statistics: renderStatistics,
 };
 
 let data = null;
@@ -87,6 +89,7 @@ async function init() {
     setUpFilterBar(data, render);
     setUpTrends(data);
     setUpMap(data);
+    setUpStatistics(data);
     render();
     const { metadata } = data;
     elements.status.textContent = `Data exported ${metadata.exported_at.slice(0, 10)} from crime.db built ${metadata.database_built_at.slice(0, 10)}.`;

@@ -1,0 +1,270 @@
+import assert from 'node:assert/strict';
+import { join } from 'node:path';
+import { beforeEach, describe, it } from 'node:test';
+import { pathToFileURL } from 'node:url';
+
+import { FRONTEND } from './helpers/paths.js';
+import { importFrontend, loadPage } from './helpers/page.js';
+
+const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} is not ${expected}`);
+
+let stats;
+
+beforeEach(async () => {
+  loadPage();
+  stats = await importFrontend('statistics.js');
+});
+
+describe('describe', () => {
+  it('summarises a list of daily totals', () => {
+    const summary = stats.describe([1, 2, 3, 4]);
+    assert.equal(summary.n, 4);
+    assert.equal(summary.sum, 10);
+    near(summary.mean, 2.5);
+    near(summary.median, 2.5);
+    near(summary.q1, 1.75);
+    near(summary.q3, 3.25);
+    near(summary.sd, Math.sqrt(5 / 3));
+  });
+
+  it('ignores values that are not finite numbers', () => {
+    const summary = stats.describe([2, NaN, Infinity, 4, null, undefined]);
+    assert.equal(summary.n, 2);
+    near(summary.mean, 3);
+  });
+
+  it('returns a complete summary of zeros for an empty list', () => {
+    const summary = stats.describe([]);
+    for (const key of ['n', 'sum', 'mean', 'median', 'sd', 'cv', 'skew', 'min', 'max', 'q1', 'q3', 'iqr', 'p90', 'p95']) {
+      assert.equal(summary[key], 0, key);
+    }
+  });
+});
+
+describe('giniCoefficient', () => {
+  it('is 0 when every day is equal', () => {
+    near(stats.giniCoefficient([5, 5, 5, 5]), 0);
+  });
+
+  it('is 0.75 when one of four days holds every offense', () => {
+    near(stats.giniCoefficient([0, 0, 0, 10]), 0.75);
+  });
+
+  it('is 0 for fewer than two days or no offenses', () => {
+    assert.equal(stats.giniCoefficient([7]), 0);
+    assert.equal(stats.giniCoefficient([0, 0, 0]), 0);
+    assert.equal(stats.giniCoefficient([]), 0);
+  });
+});
+
+describe('lorenzPoints', () => {
+  it('accumulates the share of offenses from the quietest day up', () => {
+    const { x, y } = stats.lorenzPoints([2, 1, 1]);
+    assert.equal(x.length, 4);
+    near(x[1], 100 / 3);
+    near(x[3], 100);
+    assert.deepEqual(y, [0, 25, 50, 100]);
+  });
+
+  it('falls back to the line of equality when there is nothing to plot', () => {
+    assert.deepEqual(stats.lorenzPoints([]), { x: [0, 100], y: [0, 100] });
+    assert.deepEqual(stats.lorenzPoints([0, 0]), { x: [0, 100], y: [0, 100] });
+  });
+});
+
+describe('formatStat', () => {
+  it('keeps one decimal at 1 and above, and for zero', () => {
+    assert.equal(stats.formatStat(0), '0.0');
+    assert.equal(stats.formatStat(1), '1.0');
+    assert.equal(stats.formatStat(14.04), '14.0');
+    assert.equal(stats.formatStat(8804.06), '8,804.1');
+  });
+
+  it('uses more decimals below 1 so a small rate is not 0.0', () => {
+    assert.equal(stats.formatStat(0.022), '0.02');
+    assert.equal(stats.formatStat(0.5), '0.50');
+    assert.equal(stats.formatStat(0.0092), '0.009');
+  });
+});
+
+describe('escapeHtml', () => {
+  it('escapes the characters that can open a tag or attribute', () => {
+    assert.equal(stats.escapeHtml('<img src=x onerror="a()">&\''), '&lt;img src=x onerror=&quot;a()&quot;&gt;&amp;&#39;');
+  });
+
+  it('leaves plain text and numbers alone', () => {
+    assert.equal(stats.escapeHtml('Aggravated Assault'), 'Aggravated Assault');
+    assert.equal(stats.escapeHtml(12), '12');
+  });
+});
+
+describe('csvField', () => {
+  it('quotes the field and doubles quotes inside it', () => {
+    assert.equal(stats.csvField('plain'), '"plain"');
+    assert.equal(stats.csvField('say "hi", ok'), '"say ""hi"", ok"');
+  });
+});
+
+describe('fillZeroDays', () => {
+  it('adds a 0 for each missing date and keeps the dates that have offenses', () => {
+    const totals = new Map([['2025-01-02', 7]]);
+    stats.fillZeroDays(totals, '2025-01-01', '2025-01-03');
+    assert.deepEqual([...totals.entries()].sort(), [['2025-01-01', 0], ['2025-01-02', 7], ['2025-01-03', 0]]);
+  });
+
+  it('adds nothing when the range is empty', () => {
+    const totals = new Map();
+    stats.fillZeroDays(totals, '2025-01-05', '2025-01-01');
+    assert.equal(totals.size, 0);
+  });
+});
+
+describe('Statistics tab', () => {
+  const DATA = {
+    cities: {
+      LA: { name: 'Los Angeles', first_date: '2025-01-01', last_date: '2025-01-04' },
+      SD: { name: 'San Diego', first_date: '2025-01-01', last_date: '2025-01-02' },
+    },
+    groupOf: { Homicide: 'Violent', Burglary: 'Property' },
+    populations: { LA: { 2025: 100000 }, SD: { 2025: 100000 } },
+    dailyCounts: [
+      { city: 'LA', date: '2025-01-01', category: 'Homicide', count: 4 },
+      { city: 'LA', date: '2025-01-02', category: 'Burglary', count: 6 },
+      { city: 'SD', date: '2025-01-01', category: 'Burglary', count: 2 },
+    ],
+  };
+
+  let document;
+  let filters;
+
+  async function render(overrides) {
+    ({ document } = loadPage());
+    globalThis.Plotly = { react() {} };
+    ({ filters } = await import(pathToFileURL(join(FRONTEND, 'filters.js')).href));
+    Object.assign(filters, {
+      cities: ['LA', 'SD'], group: '', category: '', start: '2025-01-01', end: '2025-01-04', measure: 'count',
+    }, overrides);
+    const page = await importFrontend('statistics.js');
+    page.setUpStatistics(DATA);
+    page.renderStatistics(DATA);
+    return [...document.querySelectorAll('.stats-kpi-card')];
+  }
+
+  it('counts days with no matching offenses, so the mean is over every day', async () => {
+    const [la] = await render({ category: 'Homicide' });
+    assert.match(la.textContent, /4 days/);
+    assert.match(la.textContent, /Daily Mean:\s*1\.0 offenses\/day/);
+  });
+
+  it('gives each city card its city colour', async () => {
+    const [la, sd] = await render({});
+    assert.equal(la.style.getPropertyValue('--city'), '#2a78d6');
+    assert.equal(sd.style.getPropertyValue('--city'), '#eb6834');
+  });
+
+  it('keeps a city that has no matching offenses and shows its zeros', async () => {
+    const [, sd] = await render({ category: 'Homicide' });
+    assert.match(sd.textContent, /2 days/);
+    assert.match(sd.textContent, /Daily Mean:\s*0\.0/);
+    assert.match(sd.textContent, /Peak Day:\s*—/);
+  });
+
+  it('shows a no-data card for a city whose data ends before the selected dates', async () => {
+    const [la, sd] = await render({ start: '2025-01-03', end: '2025-01-04' });
+    assert.match(la.textContent, /2 days/);
+    assert.match(sd.textContent, /No data for this city in the selected dates/);
+  });
+
+  it('shows category text as text, not markup', async () => {
+    const data = {
+      ...DATA,
+      dailyCounts: [{ city: 'LA', date: '2025-01-01', category: '<b id="injected">x</b>', count: 1 }],
+    };
+    ({ document } = loadPage());
+    globalThis.Plotly = { react() {} };
+    ({ filters } = await import(pathToFileURL(join(FRONTEND, 'filters.js')).href));
+    Object.assign(filters, { cities: ['LA'], group: '', category: '', start: '2025-01-01', end: '2025-01-01', measure: 'count' });
+    const page = await importFrontend('statistics.js');
+    page.setUpStatistics(data);
+    page.renderStatistics(data);
+    assert.equal(document.getElementById('injected'), null);
+    assert.match(document.getElementById('statsTableBody').textContent, /<b id="injected">x<\/b>/);
+  });
+
+  it('still fills the records table when a city has no matching offenses', async () => {
+    await render({ category: 'Homicide' });
+    assert.equal(document.querySelectorAll('#statsTableBody tr').length, 1);
+  });
+
+  describe('small rates', () => {
+    const RARE = {
+      ...DATA,
+      populations: { LA: { 2025: 10000000 }, SD: { 2025: 10000000 } },
+      dailyCounts: [{ city: 'LA', date: '2025-01-01', category: 'Homicide', count: 4 }],
+    };
+
+    async function renderRare() {
+      ({ document } = loadPage());
+      globalThis.Plotly = { react() {} };
+      ({ filters } = await import(pathToFileURL(join(FRONTEND, 'filters.js')).href));
+      Object.assign(filters, { cities: ['LA'], group: '', category: '', start: '2025-01-01', end: '2025-01-04', measure: 'rate' });
+      const page = await importFrontend('statistics.js');
+      page.setUpStatistics(RARE);
+      page.renderStatistics(RARE);
+      return document.querySelector('.stats-kpi-card').textContent.replace(/\s+/g, ' ');
+    }
+
+    it('shows a rate under 1 with two decimals instead of 0.0', async () => {
+      const card = await renderRare();
+      assert.match(card, /Daily Mean: 0\.01 \/ 100k\/day/);
+      assert.match(card, /Peak Day \(Jan 1, 2025\): 0\.04 \/ 100k/);
+      assert.match(card, /0\.04 total \/ 100k/);
+    });
+
+    it('shows the records table rate with two decimals', async () => {
+      await renderRare();
+      assert.match(document.querySelector('#statsTableBody tr').lastElementChild.textContent, /^0\.04$/);
+    });
+
+    it('lets the threshold take decimals', async () => {
+      await renderRare();
+      assert.equal(document.getElementById('statsThresholdInput').getAttribute('step'), 'any');
+    });
+  });
+
+  describe('threshold query', () => {
+    function setThreshold(value) {
+      const input = document.getElementById('statsThresholdInput');
+      input.value = value;
+      input.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+      return document.getElementById('statsThresholdOutput').textContent;
+    }
+
+    it('counts days that meet the threshold, zero days included', async () => {
+      await render({ category: 'Homicide' });
+      const text = setThreshold('4');
+      assert.match(text, /Los Angeles: 1 of 4 days \(25\.0%\) met or exceeded 4, holding 100\.0% of total offenses/);
+      assert.match(text, /San Diego: 0 of 2 days \(0\.0%\) met or exceeded 4, holding 0\.0%/);
+    });
+
+    it('names the unit of the current measure', async () => {
+      await render({});
+      assert.equal(document.getElementById('statsThresholdLabel').textContent, 'Threshold (offenses per day):');
+      await render({ measure: 'rate' });
+      assert.equal(
+        document.getElementById('statsThresholdLabel').textContent,
+        'Threshold (offenses per 100,000 residents per day):',
+      );
+    });
+
+    it('says so when a city has no data in the selected dates', async () => {
+      await render({ start: '2025-01-03', end: '2025-01-04' });
+      assert.match(setThreshold('1'), /San Diego: no data in the selected dates/);
+    });
+
+    it('rejects a negative threshold', async () => {
+      await render({});
+      assert.equal(setThreshold('-1'), 'Please enter a valid non-negative number.');
+    });
+  });
+});
