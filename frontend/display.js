@@ -58,6 +58,14 @@ export function baseLayout() {
   };
 }
 
+const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+/** Escapes a value for use in innerHTML or tooltip HTML; null/undefined become ''. */
+export function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
 export function formatNumber(value, digits = 0) {
   return value.toLocaleString('en-US', { maximumFractionDigits: digits });
 }

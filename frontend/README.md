@@ -80,12 +80,12 @@ LA's Society and Other numbers are flagged wherever they appear. Its striped bar
 
 ### Map tab
 
-One city at a time. **City** lists the toggled cities and starts on the first one. The map uses the shared crime group and date filters, rounded out to whole months, because the map files are monthly.
+One panel per toggled city, side by side in the order Los Angeles, San Diego, San Francisco (stacked at 900px wide or less). There is no City or Map shows control on this tab: the filter bar's **Cities** toggles pick the panels and its **Measure** shades every panel, the same setting Trends and Compare use. One shared legend and one color scale (quantile classes pooled across every visible panel) sit above the panels, so a shade means the same count or rate everywhere. With "Offense count" selected and two or more panels showing, a note points out that counts aren't comparable across panels (an LAPD area is a much bigger unit than a ZIP). The map uses the shared date filter, rounded out to whole months, because the map files are monthly.
 
-- **Map shows** switches between the offense count and offenses per 100,000 residents, for every city. Colors use quantile classes, so each shade covers about the same number of ZIPs or areas, and the legend lists each class's range.
-- **San Diego and San Francisco:** a ZIP map. Hover a ZIP to see its offenses and its population, median household income, median home value and poverty rate. ZIP counts are kept by crime group only, so picking a category shows its whole group on the ZIP map.
-- **Los Angeles:** LAPD publishes locations by area only, so the map shades LAPD's 21 areas. Area counts are kept by category, so the shading follows the category filter. Hover an area to see its bureau, offenses, rate and census values. The census values are labelled "Estimated from ZIPs". The export estimates them by overlaying the ZIP polygons on each area: a ZIP counts in proportion to the share of its area inside the LAPD area, as if its residents were spread evenly. Rates use the estimated area population. Downtown's Central area has few residents, so its rate is far above the others.
+- **San Diego and San Francisco:** a ZIP map, shaded by category like every other tab. Hover a ZIP to see its offenses and its population, median household income, median home value and poverty rate.
+- **Los Angeles:** LAPD publishes locations by area only, so the map shades LAPD's 21 areas, by category. Hover an area to see its bureau, offenses, rate and census values. The census values are labelled "Estimated from ZIPs". The export estimates them by overlaying the ZIP polygons on each area: a ZIP counts in proportion to the share of its area inside the LAPD area, as if its residents were spread evenly. Downtown's Central area has few residents, so its rate is far above the others.
 - **San Francisco districts:** dashed outlines show the current SFPD districts.
+- Each panel keeps its own zoom and pan. A filter change only re-shades a panel; it refits to the city's box only the first time a panel appears or when the number of visible panels changes.
 
 ### Statistics tab
 
