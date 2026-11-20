@@ -72,6 +72,24 @@ describe('lorenzPoints', () => {
   });
 });
 
+describe('escapeHtml', () => {
+  it('escapes the characters that can open a tag or attribute', () => {
+    assert.equal(stats.escapeHtml('<img src=x onerror="a()">&\''), '&lt;img src=x onerror=&quot;a()&quot;&gt;&amp;&#39;');
+  });
+
+  it('leaves plain text and numbers alone', () => {
+    assert.equal(stats.escapeHtml('Aggravated Assault'), 'Aggravated Assault');
+    assert.equal(stats.escapeHtml(12), '12');
+  });
+});
+
+describe('csvField', () => {
+  it('quotes the field and doubles quotes inside it', () => {
+    assert.equal(stats.csvField('plain'), '"plain"');
+    assert.equal(stats.csvField('say "hi", ok'), '"say ""hi"", ok"');
+  });
+});
+
 describe('fillZeroDays', () => {
   it('adds a 0 for each missing date and keeps the dates that have offenses', () => {
     const totals = new Map([['2025-01-02', 7]]);
@@ -134,6 +152,22 @@ describe('Statistics tab', () => {
     const [la, sd] = await render({ start: '2025-01-03', end: '2025-01-04' });
     assert.match(la.textContent, /2 days/);
     assert.match(sd.textContent, /No data for this city in the selected dates/);
+  });
+
+  it('shows category text as text, not markup', async () => {
+    const data = {
+      ...DATA,
+      dailyCounts: [{ city: 'LA', date: '2025-01-01', category: '<b id="injected">x</b>', count: 1 }],
+    };
+    ({ document } = loadPage());
+    globalThis.Plotly = { react() {} };
+    ({ filters } = await import(pathToFileURL(join(FRONTEND, 'filters.js')).href));
+    Object.assign(filters, { cities: ['LA'], group: '', category: '', start: '2025-01-01', end: '2025-01-01', measure: 'count' });
+    const page = await importFrontend('statistics.js');
+    page.setUpStatistics(data);
+    page.renderStatistics(data);
+    assert.equal(document.getElementById('injected'), null);
+    assert.match(document.getElementById('statsTableBody').textContent, /<b id="injected">x<\/b>/);
   });
 
   it('still fills the records table when a city has no matching offenses', async () => {

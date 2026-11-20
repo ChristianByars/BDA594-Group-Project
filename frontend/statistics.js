@@ -121,6 +121,16 @@ export function describe(rawValues) {
   };
 }
 
+/** Text safe to put inside innerHTML. */
+export function escapeHtml(text) {
+  return String(text)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 /* ---------------------------------------------------------------------
    Tab State & DOM Elements
    --------------------------------------------------------------------- */
@@ -231,7 +241,7 @@ function renderKpiCards(data, dailyTotalsByCity) {
         <div class="stats-kpi-header">
           <span>
             <span class="stats-kpi-city-dot" style="background: ${cityColor};"></span>
-            ${cityName} (${cityCode})
+            ${escapeHtml(cityName)} (${escapeHtml(cityCode)})
           </span>
         </div>
         <div class="stats-kpi-rows">No data for this city in the selected dates.</div>
@@ -244,7 +254,7 @@ function renderKpiCards(data, dailyTotalsByCity) {
         <div class="stats-kpi-header">
           <span>
             <span class="stats-kpi-city-dot" style="background: ${cityColor};"></span>
-            ${cityName} (${cityCode})
+            ${escapeHtml(cityName)} (${escapeHtml(cityCode)})
           </span>
           <span style="font-size: 11px; font-weight: 500; opacity: 0.8;">${formatNumber(stats.n)} days</span>
         </div>
@@ -428,8 +438,8 @@ function updateThresholdQuery() {
     const pctVol = totalVol ? (volAbove / totalVol) * 100 : 0;
 
     reports.push(totalDays
-      ? `<strong>${cityName}</strong>: ${countAbove} of ${totalDays} days (${pctDays.toFixed(1)}%) met or exceeded ${threshold}, holding ${pctVol.toFixed(1)}% of total offenses.`
-      : `<strong>${cityName}</strong>: no data in the selected dates.`);
+      ? `<strong>${escapeHtml(cityName)}</strong>: ${countAbove} of ${totalDays} days (${pctDays.toFixed(1)}%) met or exceeded ${threshold}, holding ${pctVol.toFixed(1)}% of total offenses.`
+      : `<strong>${escapeHtml(cityName)}</strong>: no data in the selected dates.`);
   }
 
   statsThresholdOutput.innerHTML = reports.join('<br>') || 'No days matched the selection.';
@@ -502,10 +512,10 @@ function renderTable() {
 
   statsTableBody.innerHTML = pageRows.map((r) => `
     <tr>
-      <td>${r.date}</td>
-      <td><strong>${r.cityName}</strong> <span style="font-size: 11px; opacity: 0.7;">(${r.city})</span></td>
-      <td><span class="pill" style="font-size: 11px; padding: 2px 8px;">${r.group}</span></td>
-      <td>${r.category}</td>
+      <td>${escapeHtml(r.date)}</td>
+      <td><strong>${escapeHtml(r.cityName)}</strong> <span style="font-size: 11px; opacity: 0.7;">(${escapeHtml(r.city)})</span></td>
+      <td><span class="pill" style="font-size: 11px; padding: 2px 8px;">${escapeHtml(r.group)}</span></td>
+      <td>${escapeHtml(r.category)}</td>
       <td style="text-align: right; font-weight: 600;">${formatNumber(r.count)}</td>
       <td style="text-align: right;">${r.rate.toFixed(1)}</td>
     </tr>
@@ -515,6 +525,11 @@ function renderTable() {
 /* ---------------------------------------------------------------------
    CSV Export
    --------------------------------------------------------------------- */
+
+/** A CSV text field: quoted, with quotes doubled. */
+export function csvField(text) {
+  return `"${String(text).replaceAll('"', '""')}"`;
+}
 
 function exportFilteredCsv() {
   const processed = getProcessedTableRows();
@@ -527,9 +542,7 @@ function exportFilteredCsv() {
   const lines = [headers.join(',')];
 
   for (const r of processed) {
-    const escapedCat = `"${r.category.replaceAll('"', '""')}"`;
-    const escapedGrp = `"${r.group.replaceAll('"', '""')}"`;
-    lines.push([r.date, r.city, `"${r.cityName}"`, escapedGrp, escapedCat, r.count, r.rate].join(','));
+    lines.push([r.date, r.city, csvField(r.cityName), csvField(r.group), csvField(r.category), r.count, r.rate].join(','));
   }
 
   const csvContent = lines.join('\r\n');
